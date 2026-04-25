@@ -586,15 +586,18 @@ function recordNback(isMatch){
   const rt=Math.round(performance.now()-trialStart);
   const OFFSET=4;
   const seqPos=nbackTrial+OFFSET;
-  const correctMatch=nbackSeq[seqPos]===nbackSeq[seqPos-currentN];
-  const correct=isMatch===correctMatch;
   const fb=document.getElementById('nback-feedback');
-  fb.textContent=correct?'Correct':'Incorrect';
-  fb.className='feedback '+(correct?'correct':'incorrect');
+  fb.textContent='';
+  fb.className='feedback';
+
+  
   if(!isPractice)condResults.push({
-    trial:nbackTrial+1,n:currentN,
-    target:nbackSeq[seqPos],nback:nbackSeq[seqPos-currentN],
-    correctMatch,userMatch:isMatch,rt,correct
+  trial:nbackTrial+1,
+  n:currentN,
+  target:nbackSeq[seqPos],
+  nback:nbackSeq[seqPos-currentN],
+  userMatch:isMatch,
+  rt
   });
   nbackTrial++;
   setTimeout(nextNbackTrial,400);
@@ -632,16 +635,24 @@ function endCondition(){
   const order=currentPhase==='stroop'?stroopOrder:nbackOrder;
   const sc=SOUNDSCAPES[order[condIdx]];
   const avgRT=Math.round(condResults.reduce((s,r)=>s+r.rt,0)/condResults.length);
-  const acc=Math.round(condResults.filter(r=>r.correct).length/condResults.length*100);
+
+  let acc = null;
+  let correctCount = null;
+
+  if(currentPhase==='stroop'){
+    correctCount = condResults.filter(r=>r.correct).length;
+    acc = Math.round(correctCount/condResults.length*100);
+  }
+  
   allResults.push({phase:currentPhase,condition:sc.name,conditionId:sc.id,trials:[...condResults],avgRT,acc,order:condIdx});
 
   document.getElementById('break-tag').textContent=sc.isBaseline?'Baseline complete':`Condition ${condIdx} of 5 complete`;
   document.getElementById('break-title').textContent=sc.name+' — done';
   document.getElementById('break-stats').innerHTML=`
-    <div class="stat-box"><div class="stat-val">${avgRT}</div><div class="stat-lbl">Avg RT (ms)</div></div>
-    <div class="stat-box"><div class="stat-val">${acc}%</div><div class="stat-lbl">Accuracy</div></div>
-    <div class="stat-box"><div class="stat-val">${condResults.filter(r=>r.correct).length}/${TRIALS}</div><div class="stat-lbl">Correct</div></div>
-  `;
+  <div class="stat-box"><div class="stat-val">${avgRT}</div><div class="stat-lbl">Avg RT (ms)</div></div>
+  <div class="stat-box"><div class="stat-val">${acc!==null?acc+'%':'—'}</div><div class="stat-lbl">Accuracy</div></div>
+  <div class="stat-box"><div class="stat-val">${correctCount!==null?correctCount+'/'+TRIALS:'—'}</div><div class="stat-lbl">Correct</div></div>
+`;
 
   const isLast=condIdx>=SOUNDSCAPES.length-1;
   const btn=document.getElementById('break-btn');
@@ -675,7 +686,7 @@ async function submitAndShow(){
       if(r.phase==='stroop'){
         rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.order,t.trial,'',t.rt,t.correct?1:0,t.displayWord,t.correctInk,t.chosen]);
       }else{
-        rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.order,t.trial,t.n,t.rt,t.correct?1:0,t.target,t.nback,t.correctMatch?1:0]);
+        rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.order,t.trial,t.n,t.rt,'',t.target,t.nback,'']);
       }
     });
   });
@@ -690,7 +701,7 @@ function showFinal(){
     const tbody=document.getElementById(id);tbody.innerHTML='';
     allResults.filter(r=>r.phase===phase).forEach(r=>{
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${r.condition}</td><td>${r.avgRT}</td><td class="${r.acc>=70?'good':'bad'}">${r.acc}%</td>`;
+      tr.innerHTML=`<td>${r.condition}</td><td>${r.avgRT}</td><td>${r.acc!==null ? r.acc+'%' : '—'}</td>
       tbody.appendChild(tr);
     });
   };
