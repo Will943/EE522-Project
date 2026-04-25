@@ -343,7 +343,7 @@ function playSoundscape(id,vol){
   stopBg();
   if(id==='silent')return;
   const ctx=getCtx();
-  const master=ctx.createGain();master.gain.value=vol||0.6;master.connect(ctx.destination);
+  const master=ctx.createGain();master.gain.value=vol||0.6*1.08;master.connect(ctx.destination);
   if(id==='whitenoise'){
     const buf=ctx.createBuffer(2,ctx.sampleRate*3,ctx.sampleRate);
     for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
