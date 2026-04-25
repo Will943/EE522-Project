@@ -114,7 +114,7 @@
   <div id="s-welcome" class="screen">
     <div class="tag">EE522: Final Project</div>
     <h1>Soundscape &amp;<br>Cognition Test</h1>
-    <p>You will complete two cognitive tasks (Stroop + N-back) under 6 different acoustic conditions based on real recorded spaces. Takes about 25–30 minutes. Use headphones throughout.</p>
+    <p>You will complete two cognitive tasks (Stroop + N-back) under 6 different acoustic conditions based on real recorded spaces. Takes about 10–15 minutes. Use headphones throughout.</p>
     <div class="divider"></div>
     <label>First and last name</label>
     <input type="text" id="pid" placeholder="e.g. Jane Smith">
@@ -275,7 +275,7 @@
 
 </div>
 <script>
-const SHEETS_URL='https://script.google.com/macros/s/AKfycbxsAC-dt4qqWGcJ1Ctt_qYhNzJCbSZ4wWJGdUoVGvfOwr6PHeQvMTuGrj83nnANcfvY/exec';
+const SHEETS_URL='https://script.google.com/macros/s/AKfycbxZYwX-p_767ZnUbjZQ9V2M8mwBEDWrFgrXcuUrZkTjSjZ6oQGtvoVUHZcOLYLywIc9ow/exec';
 
 const SOUNDSCAPES=[
   {id:'whitenoise',name:'White noise',          desc:'Broadband white noise — equal energy across all frequencies. No room character. Baseline condition.',isBaseline:true, color:'#aaaaaa',vol:0.50},
@@ -529,7 +529,7 @@ function buildNbackSeq(){
     // 30% chance of placing a deliberate match at the N for this slot
     const trialIdx=i-OFFSET;
     const n=trialIdx>=0?nbackNValues[trialIdx]:2;
-    if(i>=n && Math.random()<0.3){
+    if(i>=n && Math.random()<0.35){
       nbackSeq.push(nbackSeq[i-n]); // deliberate match
     }else{
       nbackSeq.push(NLETTERS[Math.floor(Math.random()*NLETTERS.length)]);
@@ -701,7 +701,7 @@ function showFinal(){
     const tbody=document.getElementById(id);tbody.innerHTML='';
     allResults.filter(r=>r.phase===phase).forEach(r=>{
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${r.condition}</td><td>${r.avgRT}</td><td>${r.acc!==null ? r.acc+'%' : '—'}</td>
+      tr.innerHTML=`<td>${r.condition}</td><td>${r.avgRT}</td><td>${r.acc!==null ? r.acc+'%' : '—'}</td>`;
       tbody.appendChild(tr);
     });
   };
