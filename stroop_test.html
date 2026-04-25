@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soundscape Cognitive Study</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e; --surface: #161616; --border: #2a2a2a; --text: #f0ede8;
+    --muted: #6b6b6b; --accent: #c8f060; --red: #ff5f5f; --blue: #5fa8ff;
+    --green: #5fffa0; --yellow: #ffe45f;
+    --font-display: 'DM Mono', monospace; --font-body: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+  .container { width: 100%; max-width: 560px; }
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .tag { display: inline-block; font-family: var(--font-display); font-size: 11px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 100px; color: var(--muted); margin-bottom: 1.5rem; letter-spacing: 0.05em; }
+  .tag.accent { border-color: var(--accent); color: var(--accent); }
+  .tag.practice { border-color: #5fa8ff; color: #5fa8ff; }
+  h1 { font-family: var(--font-display); font-size: 28px; font-weight: 500; line-height: 1.2; margin-bottom: 1rem; letter-spacing: -0.02em; }
+  h2 { font-family: var(--font-display); font-size: 20px; font-weight: 500; margin-bottom: 0.75rem; letter-spacing: -0.01em; }
+  p { font-size: 14px; color: #a0a0a0; line-height: 1.7; margin-bottom: 1rem; }
+  .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+  label { display: block; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+  input[type="text"], select { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--font-body); font-size: 14px; margin-bottom: 1.25rem; outline: none; transition: border-color 0.15s; }
+  input[type="text"]:focus, select:focus { border-color: var(--accent); }
+  select option { background: #1a1a1a; }
+  .btn { display: inline-block; padding: 11px 24px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text); font-family: var(--font-body); font-size: 14px; cursor: pointer; transition: all 0.15s; font-weight: 400; }
+  .btn:hover { border-color: #555; background: var(--surface); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #0e0e0e; font-weight: 500; width: 100%; text-align: center; margin-top: 0.5rem; }
+  .btn-primary:hover { background: #d4f570; }
+  .warning-box { border: 1px solid #3a3000; background: #1e1800; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #c8a840; margin-bottom: 1.25rem; line-height: 1.6; }
+  .info-box { border: 1px solid #003a2a; background: #001a12; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #40c890; margin-bottom: 1.25rem; line-height: 1.6; }
+  .progress-wrap { margin-bottom: 2rem; }
+  .progress-label { display: flex; justify-content: space-between; font-family: var(--font-display); font-size: 11px; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.05em; }
+  .progress-track { height: 2px; background: var(--border); border-radius: 1px; }
+  .progress-fill { height: 2px; background: var(--accent); border-radius: 1px; transition: width 0.3s ease; }
+  .stroop-area { text-align: center; padding: 3rem 0 2.5rem; }
+  .stroop-word { font-family: var(--font-display); font-size: 72px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; margin-bottom: 2.5rem; }
+  .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 340px; margin: 0 auto; }
+  .color-btn { padding: 16px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: var(--font-display); font-size: 13px; cursor: pointer; transition: all 0.1s; letter-spacing: 0.04em; }
+  .color-btn:hover { border-color: #555; background: #222; }
+  .color-btn:active { transform: scale(0.97); }
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 1.5rem 0; }
+  .stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
+  .stat-val { font-family: var(--font-display); font-size: 26px; font-weight: 500; color: var(--text); }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: 0.04em; }
+  .results-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 1.5rem; }
+  .results-table th { text-align: left; font-family: var(--font-display); font-size: 10px; letter-spacing: 0.08em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 400; text-transform: uppercase; }
+  .results-table td { padding: 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .results-table tr:last-child td { border-bottom: none; }
+  .good { color: var(--green); } .bad { color: var(--red); }
+  .sound-indicator { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 11px; color: var(--muted); margin-bottom: 1.5rem; }
+  .sound-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; }
+  .sound-dot.silent { background: var(--muted); animation: none; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .condition-name { font-family: var(--font-display); font-size: 22px; font-weight: 500; margin-bottom: 0.5rem; }
+  .vol-preview { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 1rem; }
+  .vol-bars { display: flex; align-items: flex-end; gap: 2px; height: 24px; }
+  .vol-bar { width: 4px; background: var(--accent); border-radius: 2px; transition: height 0.08s; }
+  .vol-label { font-size: 13px; color: var(--muted); flex: 1; }
+  .btn-small { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text); font-family: var(--font-body); font-size: 13px; cursor: pointer; }
+  .btn-small:hover { background: var(--surface); }
+  .btn-small.playing { border-color: var(--accent); color: var(--accent); }
+  .loading-overlay { text-align: center; padding: 3rem 1rem; }
+  .loading-spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div id="s-loading" class="screen active">
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p style="font-family:var(--font-display); font-size:13px; color:var(--muted);">Loading audio...</p>
+    </div>
+  </div>
+
+  <div id="s-welcome" class="screen">
+    <div class="tag">EE522 — Psychoacoustics Study</div>
+    <h1>Soundscape &amp;<br>Cognition Test</h1>
+    <p>You will complete a color-naming task under 8 different acoustic conditions. Each condition has 8 trials. The test takes about 15–20 minutes. Please use headphones throughout.</p>
+    <div class="divider"></div>
+    <label>Participant ID</label>
+    <input type="text" id="pid" placeholder="e.g. P01 or your name">
+    <label>Age range</label>
+    <select id="age">
+      <option value="">Select...</option>
+      <option>18–24</option><option>25–34</option><option>35–44</option><option>45–54</option><option>55+</option>
+    </select>
+    <label>Primary language</label>
+    <select id="lang">
+      <option value="">Select...</option>
+      <option>English</option><option>Spanish</option><option>Mandarin</option><option>Arabic</option><option>French</option><option>Other</option>
+    </select>
+    <div class="warning-box">Use headphones. Do not close or refresh this tab — your data will be lost.</div>
+    <button class="btn btn-primary" onclick="goToVolume()">Continue →</button>
+  </div>
+
+  <div id="s-volume" class="screen">
+    <div class="tag">Setup</div>
+    <h2>Volume check</h2>
+    <p>Click play to hear the background sound used in this study. Adjust your device volume until the chatter is clearly audible but not overwhelming — like background noise in a café where you can hear people talking but can't make out what they're saying.</p>
+    <div class="vol-preview">
+      <div class="vol-bars" id="vol-bars">
+        <div class="vol-bar" style="height:6px"></div>
+        <div class="vol-bar" style="height:10px"></div>
+        <div class="vol-bar" style="height:16px"></div>
+        <div class="vol-bar" style="height:20px"></div>
+        <div class="vol-bar" style="height:14px"></div>
+        <div class="vol-bar" style="height:8px"></div>
+        <div class="vol-bar" style="height:18px"></div>
+        <div class="vol-bar" style="height:12px"></div>
+      </div>
+      <span class="vol-label" id="vol-label">Not playing</span>
+      <button class="btn-small" id="vol-btn" onclick="toggleVolPreview()">Play</button>
+    </div>
+    <div class="info-box">Aim for a level where you are aware of the background sound but can still comfortably focus on the visual task. Once set, do not adjust your volume for the rest of the test.</div>
+    <button class="btn btn-primary" onclick="stopVolPreview(); show('s-practice-intro')">Volume is good — continue →</button>
+  </div>
+
+  <div id="s-practice-intro" class="screen">
+    <div class="tag practice">Practice round</div>
+    <div class="condition-name" style="color:#5fa8ff;">Practice</div>
+    <p style="margin-top:0.5rem;">Before the real test begins, complete 8 practice trials with no background sound. This is just to get familiar with the task — results are not recorded.</p>
+    <p>A color word will appear on screen. Click the button that matches the <strong style="color:var(--text)">ink color</strong> of the word — not what the word says.</p>
+    <p style="font-size:13px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px; color:var(--text);">
+      Example: if you see <span style="color:#ff5f5f; font-family:var(--font-display);">BLUE</span> — click <strong>Red</strong> because the ink is red.
+    </p>
+    <div style="margin-top:1rem;"></div>
+    <button class="btn btn-primary" onclick="startPractice()">Start practice →</button>
+  </div>
+
+  <div id="s-trial" class="screen">
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="trial-label">Trial 1 of 8</span>
+        <span id="condition-label-top" style="color:var(--muted)"></span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="trial-bar" style="width:0%"></div></div>
+    </div>
+    <div class="sound-indicator">
+      <div class="sound-dot" id="sound-dot"></div>
+      <span id="sound-name"></span>
+    </div>
+    <div class="stroop-area">
+      <div id="stroop-word" class="stroop-word">RED</div>
+      <div class="color-grid" id="color-grid"></div>
+    </div>
+  </div>
+
+  <div id="s-break" class="screen">
+    <div class="tag" id="break-tag">Condition complete</div>
+    <h2 id="break-title"></h2>
+    <div class="stat-row" id="break-stats"></div>
+    <p id="break-msg"></p>
+    <button class="btn btn-primary" id="break-btn">Continue →</button>
+  </div>
+
+  <div id="s-done" class="screen">
+    <div class="tag accent">Study complete</div>
+    <h2>Your results</h2>
+    <p>Thank you for participating. Here is a summary across all 8 conditions.</p>
+    <div class="stat-row" id="final-stats"></div>
+    <div class="divider"></div>
+    <table class="results-table">
+      <thead><tr><th>Condition</th><th>Avg RT (ms)</th><th>Accuracy</th></tr></thead>
+      <tbody id="results-body"></tbody>
+    </table>
+    <button class="btn btn-primary" onclick="downloadCSV()">Download CSV →</button>
+  </div>
+
+</div>
+<script>
+const SOUNDSCAPES = [
+  { id:'whitenoise', name:'White noise', desc:'Broadband white noise — equal energy across all frequencies. No room character. This is the baseline condition.', isBaseline:true, color:'#aaaaaa' },
+  { id:'dry',        name:'Dry',         desc:'No reverb, no reflections — like a recording studio or acoustically treated office. Sound is immediate and clear.', color:'#c8f060' },
+  { id:'reverberant',name:'Reverberant', desc:'Long decay, dense reflections — like a cathedral or stone hall. Voices wash together and trail for several seconds.', color:'#5fa8ff' },
+  { id:'spatial',    name:'Spatially complex', desc:'Voices positioned at different directions and slowly moving around you — like a busy open-plan office.', color:'#ff9f5f' },
+  { id:'resonant',   name:'Resonant',    desc:'Specific frequencies amplified by room modes — creates a droning or ringing character at certain pitches.', color:'#bf8fff' },
+  { id:'lowpass',    name:'Low-pass filtered', desc:'High frequencies cut — like hearing sound through a thick wall or in an adjacent room. Speech becomes muffled.', color:'#ff7f7f' },
+  { id:'earlyrefl',  name:'Early reflections', desc:'Short echoes only, no long tail — like a small tiled bathroom or concrete stairwell.', color:'#7fffdf' }
+];
+
+const WORDS = ['RED','BLUE','GREEN','YELLOW'];
+const INK = { RED:'#ff5f5f', BLUE:'#5fa8ff', GREEN:'#5fffa0', YELLOW:'#ffe45f' };
+const TRIALS = 8;
+
+let pid='', age='', lang='';
+let order=[];
+let condIdx=0, trialIdx=0, trialStart=0;
+let allResults=[], condResults=[];
+let isPractice=false;
+let audioCtx=null, audioBuf=null, bgSrc=null, volPlaying=false, volAnim=null;
+
+const shuffle = a => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
+function show(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function getCtx() { if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
+
+async function loadAudio() {
+  try {
+    const ctx=getCtx();
+    const res=await fetch('chatter.wav');
+    const ab=await res.arrayBuffer();
+    audioBuf=await ctx.decodeAudioData(ab);
+    show('s-welcome');
+  } catch(e) {
+    document.getElementById('s-loading').innerHTML='<div style="padding:2rem;text-align:center"><p style="color:#ff5f5f;font-family:var(--font-display);font-size:13px;">Could not load chatter.wav</p><p style="margin-top:0.5rem;color:#a0a0a0;">Make sure chatter.wav is in the same folder as this HTML file.</p></div>';
+  }
+}
+
+function stopBg() { if(bgSrc){try{bgSrc.stop();}catch(e){} bgSrc=null;} }
+
+function playSoundscape(id) {
+  stopBg();
+  if(id==='silent') return;
+  const ctx=getCtx();
+  const master=ctx.createGain(); master.gain.value=0.6; master.connect(ctx.destination);
+
+  if(id==='whitenoise') {
+    const buf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
+    const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    const src=ctx.createBufferSource(); src.buffer=buf; src.loop=true;
+    const f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1200; f.Q.value=0.5;
+    src.connect(f); f.connect(master); src.start(); bgSrc=src; return;
+  }
+
+  const src=ctx.createBufferSource(); src.buffer=audioBuf; src.loop=true; bgSrc=src;
+
+  if(id==='dry') {
+    src.connect(master); src.start();
+  }
+  else if(id==='reverberant') {
+    src.connect(master);
+    [[0.031,0.83,1.0],[0.063,0.80,0.9],[0.107,0.77,0.8],[0.181,0.74,0.7],[0.257,0.71,0.6],[0.331,0.68,0.5],[0.419,0.65,0.4],[0.503,0.62,0.3]].forEach(([t,fb,wet])=>{
+      const d=ctx.createDelay(4.0); d.delayTime.value=t;
+      const f=ctx.createGain(); f.gain.value=fb;
+      const w=ctx.createGain(); w.gain.value=wet;
+      src.connect(d); d.connect(f); f.connect(d); d.connect(w); w.connect(master);
+    });
+    src.start();
+  }
+  else if(id==='spatial') {
+    const lfo=ctx.createOscillator(); lfo.frequency.value=0.05;
+    const lfoG=ctx.createGain(); lfoG.gain.value=0.95;
+    lfo.connect(lfoG); lfo.start();
+    [[-1.0,0.7],[1.0,0.7],[0,0.5]].forEach(([pan,vol])=>{
+      const p=ctx.createStereoPanner(); p.pan.value=pan;
+      const g=ctx.createGain(); g.gain.value=vol;
+      src.connect(g); g.connect(p); p.connect(master);
+    });
+    const movePan=ctx.createStereoPanner();
+    const moveG=ctx.createGain(); moveG.gain.value=0.6;
+    lfoG.connect(movePan.pan);
+    src.connect(moveG); moveG.connect(movePan); movePan.connect(master);
+    src.start();
+  }
+  else if(id==='resonant') {
+    src.connect(master);
+    [[120,20,18],[200,24,16],[350,22,14],[500,26,12],[800,30,10],[1200,32,9]].forEach(([freq,q,g])=>{
+      const f=ctx.createBiquadFilter(); f.type='peaking'; f.frequency.value=freq; f.Q.value=q; f.gain.value=g;
+      src.connect(f); f.connect(master);
+    });
+    src.start();
+  }
+  else if(id==='lowpass') {
+    const f1=ctx.createBiquadFilter(); f1.type='lowpass'; f1.frequency.value=380; f1.Q.value=0.9;
+    const f2=ctx.createBiquadFilter(); f2.type='lowpass'; f2.frequency.value=380; f2.Q.value=0.9;
+    const g=ctx.createGain(); g.gain.value=1.8;
+    src.connect(f1); f1.connect(f2); f2.connect(g); g.connect(master);
+    src.start();
+  }
+  else if(id==='earlyrefl') {
+    src.connect(master);
+    [[0.011,0.60],[0.019,0.54],[0.027,0.48],[0.038,0.42],[0.051,0.36],[0.064,0.30],[0.078,0.24],[0.091,0.18]].forEach(([t,w])=>{
+      const d=ctx.createDelay(0.1); d.delayTime.value=t;
+      const g=ctx.createGain(); g.gain.value=w;
+      src.connect(d); d.connect(g); g.connect(master);
+    });
+    src.start();
+  }
+}
+
+function toggleVolPreview() {
+  const btn=document.getElementById('vol-btn');
+  const lbl=document.getElementById('vol-label');
+  if(volPlaying) {
+    stopBg(); volPlaying=false;
+    btn.textContent='Play'; btn.classList.remove('playing');
+    lbl.textContent='Not playing'; animBars(false);
+  } else {
+    playSoundscape('dry'); volPlaying=true;
+    btn.textContent='Stop'; btn.classList.add('playing');
+    lbl.textContent='Playing — adjust your volume now'; animBars(true);
+  }
+}
+function stopVolPreview() { if(volPlaying){stopBg();volPlaying=false;animBars(false);} }
+function animBars(on) {
+  const bars=document.querySelectorAll('.vol-bar');
+  cancelAnimationFrame(volAnim);
+  if(!on){bars.forEach(b=>b.style.height='4px');return;}
+  function f(){bars.forEach(b=>b.style.height=(4+Math.random()*18).toFixed(0)+'px');volAnim=requestAnimationFrame(f);}f();
+}
+
+function goToVolume() {
+  pid=document.getElementById('pid').value.trim()||'unknown';
+  age=document.getElementById('age').value||'unknown';
+  lang=document.getElementById('lang').value||'unknown';
+  const nonBase=SOUNDSCAPES.slice(1);
+  order=[0,...shuffle(nonBase.map((_,i)=>i+1))];
+  condIdx=0;
+  show('s-volume');
+}
+
+function startPractice() {
+  isPractice=true; condResults=[]; trialIdx=0;
+  const dot=document.getElementById('sound-dot');
+  dot.className='sound-dot silent';
+  document.getElementById('sound-name').textContent='No sound (practice)';
+  document.getElementById('condition-label-top').textContent='Practice';
+  document.getElementById('trial-bar').style.background='#5fa8ff';
+  playSoundscape('silent');
+  show('s-trial'); nextTrial();
+}
+
+function showConditionIntro() {
+  const sc=SOUNDSCAPES[order[condIdx]];
+  const isBase=sc.isBaseline;
+  const num=condIdx;
+  const html=`
+    <div class="tag ${isBase?'':'accent'}" style="margin-bottom:1.5rem;">${isBase?'Baseline — always first':`Condition ${num} of 7`}</div>
+    <div class="condition-name" style="color:${sc.color}">${sc.name}</div>
+    <p style="margin-top:0.5rem;">${sc.desc}</p>
+    <p>Complete <strong style="color:var(--text)">8 trials</strong> with this soundscape playing. Name the <strong style="color:var(--text)">ink color</strong> as fast and accurately as possible.</p>
+    <button class="btn btn-primary" onclick="startCondition()">Start →</button>
+  `;
+  let s=document.getElementById('s-cond-intro');
+  if(!s){s=document.createElement('div');s.id='s-cond-intro';s.className='screen';document.querySelector('.container').appendChild(s);}
+  s.innerHTML=html; show('s-cond-intro');
+}
+
+function startCondition() {
+  isPractice=false; condResults=[]; trialIdx=0;
+  const sc=SOUNDSCAPES[order[condIdx]];
+  document.getElementById('condition-label-top').textContent=sc.name;
+  document.getElementById('trial-bar').style.background=sc.color;
+  const dot=document.getElementById('sound-dot');
+  dot.className='sound-dot'; dot.style.background=sc.color;
+  document.getElementById('sound-name').textContent=sc.name+' playing';
+  playSoundscape(sc.id); show('s-trial'); nextTrial();
+}
+
+function nextTrial() {
+  if(trialIdx>=TRIALS){isPractice?endPractice():endCondition();return;}
+  document.getElementById('trial-label').textContent=`Trial ${trialIdx+1} of ${TRIALS}`;
+  document.getElementById('trial-bar').style.width=(trialIdx/TRIALS*100)+'%';
+  const word=WORDS[Math.floor(Math.random()*WORDS.length)];
+  let ink; do{ink=WORDS[Math.floor(Math.random()*WORDS.length)];}while(ink===word);
+  const el=document.getElementById('stroop-word'); el.textContent=word; el.style.color=INK[ink];
+  const grid=document.getElementById('color-grid'); grid.innerHTML='';
+  shuffle(WORDS).forEach(c=>{
+    const b=document.createElement('button'); b.className='color-btn';
+    b.textContent=c.charAt(0)+c.slice(1).toLowerCase();
+    b.style.borderTop=`3px solid ${INK[c]}`;
+    b.onclick=()=>recordResp(c,ink,word); grid.appendChild(b);
+  });
+  trialStart=performance.now();
+}
+
+function recordResp(chosen,correctInk,displayWord) {
+  const rt=Math.round(performance.now()-trialStart);
+  const correct=chosen===correctInk;
+  if(!isPractice) condResults.push({trial:trialIdx+1,displayWord,correctInk,chosen,rt,correct});
+  trialIdx++; nextTrial();
+}
+
+function endPractice() {
+  stopBg();
+  document.getElementById('break-tag').textContent='Practice complete';
+  document.getElementById('break-title').textContent='Practice done';
+  document.getElementById('break-stats').innerHTML='';
+  document.getElementById('break-msg').textContent='The real test begins now. The first condition is always the baseline (white noise). Results will be recorded from here on.';
+  const btn=document.getElementById('break-btn');
+  btn.textContent='Start baseline →';
+  btn.onclick=showConditionIntro;
+  show('s-break');
+}
+
+function endCondition() {
+  stopBg();
+  const sc=SOUNDSCAPES[order[condIdx]];
+  const avgRT=Math.round(condResults.reduce((s,r)=>s+r.rt,0)/condResults.length);
+  const acc=Math.round(condResults.filter(r=>r.correct).length/condResults.length*100);
+  allResults.push({condition:sc.name,conditionId:sc.id,trials:[...condResults],avgRT,acc,order:condIdx});
+  document.getElementById('break-tag').textContent=sc.isBaseline?'Baseline complete':`Condition ${condIdx} of 7 complete`;
+  document.getElementById('break-title').textContent=sc.name+' — done';
+  document.getElementById('break-stats').innerHTML=`
+    <div class="stat-box"><div class="stat-val">${avgRT}</div><div class="stat-lbl">Avg RT (ms)</div></div>
+    <div class="stat-box"><div class="stat-val">${acc}%</div><div class="stat-lbl">Accuracy</div></div>
+    <div class="stat-box"><div class="stat-val">${condResults.filter(r=>r.correct).length}/${TRIALS}</div><div class="stat-lbl">Correct</div></div>
+  `;
+  const isLast=condIdx>=SOUNDSCAPES.length-1;
+  const btn=document.getElementById('break-btn');
+  if(isLast) {
+    document.getElementById('break-msg').textContent='You have completed all conditions. Click below to see your final results.';
+    btn.textContent='See results →'; btn.onclick=showFinal;
+  } else {
+    const next=SOUNDSCAPES[order[condIdx+1]];
+    document.getElementById('break-msg').textContent=`Take a short break if needed. Next up: ${next.name}.`;
+    btn.textContent='Continue →'; btn.onclick=()=>{condIdx++;showConditionIntro();};
+  }
+  show('s-break');
+}
+
+function showFinal() {
+  const tbody=document.getElementById('results-body'); tbody.innerHTML='';
+  allResults.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r.condition}</td><td>${r.avgRT}</td><td class="${r.acc>=70?'good':'bad'}">${r.acc}%</td>`;
+    tbody.appendChild(tr);
+  });
+  const oRT=Math.round(allResults.reduce((s,r)=>s+r.avgRT,0)/allResults.length);
+  const oAcc=Math.round(allResults.reduce((s,r)=>s+r.acc,0)/allResults.length);
+  document.getElementById('final-stats').innerHTML=`
+    <div class="stat-box"><div class="stat-val">${oRT}</div><div class="stat-lbl">Overall avg RT</div></div>
+    <div class="stat-box"><div class="stat-val">${oAcc}%</div><div class="stat-lbl">Overall accuracy</div></div>
+    <div class="stat-box"><div class="stat-val">${allResults.length*TRIALS}</div><div class="stat-lbl">Total trials</div></div>
+  `;
+  show('s-done');
+}
+
+function downloadCSV() {
+  const rows=[['participant_id','age','language','condition','condition_id','condition_order','trial','display_word','correct_ink','chosen','rt_ms','correct']];
+  allResults.forEach(r=>r.trials.forEach(t=>{
+    rows.push([pid,age,lang,r.condition,r.conditionId,r.order,t.trial,t.displayWord,t.correctInk,t.chosen,t.rt,t.correct?1:0]);
+  }));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`stroop_${pid}_${Date.now()}.csv`;
+  a.click();
+}
+
+window.addEventListener('load', loadAudio);
+</script>
+</body>
+</html>
