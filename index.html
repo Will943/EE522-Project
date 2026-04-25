@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soundscape Cognitive Study</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0e0e0e; --surface:#161616; --border:#2a2a2a; --text:#f0ede8;
+    --muted:#6b6b6b; --accent:#c8f060; --red:#ff5f5f; --blue:#5fa8ff;
+    --green:#5fffa0; --yellow:#ffe45f;
+    --font-display:'DM Mono',monospace; --font-body:'DM Sans',sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem 1rem; }
+  .container { width:100%; max-width:560px; }
+  .screen { display:none; }
+  .screen.active { display:block; animation:fadeIn 0.3s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .tag { display:inline-block; font-family:var(--font-display); font-size:11px; padding:3px 10px; border:1px solid var(--border); border-radius:100px; color:var(--muted); margin-bottom:1.5rem; letter-spacing:0.05em; }
+  .tag.accent { border-color:var(--accent); color:var(--accent); }
+  .tag.practice { border-color:#5fa8ff; color:#5fa8ff; }
+  h1 { font-family:var(--font-display); font-size:28px; font-weight:500; line-height:1.2; margin-bottom:1rem; letter-spacing:-0.02em; }
+  h2 { font-family:var(--font-display); font-size:20px; font-weight:500; margin-bottom:0.75rem; }
+  p { font-size:14px; color:#a0a0a0; line-height:1.7; margin-bottom:1rem; }
+  .divider { height:1px; background:var(--border); margin:1.5rem 0; }
+  label { display:block; font-family:var(--font-display); font-size:11px; letter-spacing:0.08em; color:var(--muted); margin-bottom:6px; text-transform:uppercase; }
+  input[type="text"], select { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--text); font-family:var(--font-body); font-size:14px; margin-bottom:1.25rem; outline:none; transition:border-color 0.15s; }
+  input[type="text"]:focus, select:focus { border-color:var(--accent); }
+  select option { background:#1a1a1a; }
+  .btn { display:inline-block; padding:11px 24px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:var(--font-body); font-size:14px; cursor:pointer; transition:all 0.15s; }
+  .btn:hover { border-color:#555; background:var(--surface); }
+  .btn-primary { background:var(--accent); border-color:var(--accent); color:#0e0e0e; font-weight:500; width:100%; text-align:center; margin-top:0.5rem; }
+  .btn-primary:hover { background:#d4f570; }
+  .btn-primary:disabled { opacity:0.4; cursor:not-allowed; background:var(--accent); }
+  .warning-box { border:1px solid #3a3000; background:#1e1800; border-radius:8px; padding:12px 14px; font-size:13px; color:#c8a840; margin-bottom:1.25rem; line-height:1.6; }
+  .info-box { border:1px solid #003a2a; background:#001a12; border-radius:8px; padding:12px 14px; font-size:13px; color:#40c890; margin-bottom:1.25rem; line-height:1.6; }
+  .progress-wrap { margin-bottom:2rem; }
+  .progress-label { display:flex; justify-content:space-between; font-family:var(--font-display); font-size:11px; color:var(--muted); margin-bottom:8px; }
+  .progress-track { height:2px; background:var(--border); border-radius:1px; }
+  .progress-fill { height:2px; border-radius:1px; transition:width 0.3s ease; }
+  .sound-indicator { display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-size:11px; color:var(--muted); margin-bottom:1.5rem; }
+  .sound-dot { width:6px; height:6px; border-radius:50%; animation:pulse 1.5s infinite; }
+  .sound-dot.silent { background:var(--muted)!important; animation:none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .condition-name { font-family:var(--font-display); font-size:22px; font-weight:500; margin-bottom:0.5rem; }
+  .stat-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:1.5rem 0; }
+  .stat-box { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem; text-align:center; }
+  .stat-val { font-family:var(--font-display); font-size:26px; font-weight:500; }
+  .stat-lbl { font-size:11px; color:var(--muted); margin-top:4px; }
+  .results-table { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:1.5rem; }
+  .results-table th { text-align:left; font-family:var(--font-display); font-size:10px; letter-spacing:0.08em; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--border); font-weight:400; text-transform:uppercase; }
+  .results-table td { padding:10px; border-bottom:1px solid var(--border); color:var(--text); }
+  .results-table tr:last-child td { border-bottom:none; }
+  .good { color:var(--green); } .bad { color:var(--red); }
+  .vol-preview { display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:1rem; }
+  .vol-bars { display:flex; align-items:flex-end; gap:2px; height:24px; }
+  .vol-bar { width:4px; background:var(--accent); border-radius:2px; transition:height 0.08s; }
+  .vol-label { font-size:13px; color:var(--muted); flex:1; }
+  .btn-small { padding:6px 14px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:var(--font-body); font-size:13px; cursor:pointer; }
+  .btn-small:hover { background:var(--surface); }
+  .btn-small.playing { border-color:var(--accent); color:var(--accent); }
+  .loading-overlay { text-align:center; padding:3rem 1rem; }
+  .loading-spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 1rem; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .stroop-area { text-align:center; padding:3rem 0 2.5rem; }
+  .stroop-word { font-family:var(--font-display); font-size:72px; font-weight:500; letter-spacing:-0.02em; line-height:1; margin-bottom:2.5rem; }
+  .color-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:340px; margin:0 auto; }
+  .color-btn { padding:16px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:var(--font-display); font-size:13px; cursor:pointer; transition:all 0.1s; }
+  .color-btn:hover { border-color:#555; background:#222; }
+  .color-btn:active { transform:scale(0.97); }
+  .nback-area { text-align:center; padding:2rem 0; }
+  .nback-letter { font-family:var(--font-display); font-size:96px; font-weight:500; line-height:1; margin-bottom:0.5rem; transition:opacity 0.1s; }
+  .nback-hint { font-size:13px; color:var(--muted); margin-bottom:2rem; font-family:var(--font-display); }
+  .nback-btns { display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:340px; margin:0 auto; }
+  .nback-btn { padding:18px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:var(--font-display); font-size:13px; cursor:pointer; transition:all 0.1s; }
+  .nback-btn:hover { background:#222; border-color:#555; }
+  .nback-btn:active { transform:scale(0.97); }
+  .nback-btn.match { border-color:var(--green); color:var(--green); }
+  .nback-btn.nomatch { border-color:var(--red); color:var(--red); }
+  .nback-seq { display:flex; gap:5px; justify-content:center; margin-bottom:1.5rem; flex-wrap:wrap; }
+  .seq-dot { width:26px; height:26px; border-radius:6px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:11px; color:var(--muted); }
+  .seq-dot.current { border-color:var(--accent); color:var(--accent); }
+  .seq-dot.shown { background:var(--surface); color:var(--text); }
+  .feedback { font-family:var(--font-display); font-size:13px; text-align:center; margin-top:1rem; height:20px; }
+  .feedback.correct { color:var(--green); } .feedback.incorrect { color:var(--red); }
+  .phase-banner { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:var(--font-display); font-size:12px; color:var(--muted); margin-bottom:1.5rem; display:flex; justify-content:space-between; }
+  .loading-progress { width:100%; background:var(--border); border-radius:2px; height:3px; margin-top:1rem; }
+  .loading-progress-fill { height:3px; background:var(--accent); border-radius:2px; transition:width 0.3s; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div id="s-loading" class="screen active">
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p style="font-family:var(--font-display);font-size:13px;color:var(--muted);" id="loading-msg">Loading audio files...</p>
+      <div class="loading-progress"><div class="loading-progress-fill" id="loading-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div id="s-welcome" class="screen">
+    <div class="tag">EE522: Final Project</div>
+    <h1>Soundscape &amp;<br>Cognition Test</h1>
+    <p>You will complete two cognitive tasks under 6 different acoustic conditions based on real recorded spaces. The full test takes about 25–30 minutes. Please use headphones throughout.</p>
+    <div class="divider"></div>
+    <label>First and last name</label>
+    <input type="text" id="pid" placeholder="e.g. Jane Smith">
+    <label>Age range</label>
+    <select id="age">
+      <option value="">Select...</option>
+      <option>18–24</option><option>25–34</option><option>35–44</option><option>45–54</option><option>55+</option>
+    </select>
+    <label>Primary language</label>
+    <select id="lang">
+      <option value="">Select...</option>
+      <option>English</option><option>Spanish</option><option>Mandarin</option><option>Arabic</option><option>French</option><option>Other</option>
+    </select>
+    <label>Where did you grow up?</label>
+    <select id="upbringing">
+      <option value="">Select...</option>
+      <option>City / Urban</option><option>Suburbs</option><option>Rural / Small town</option><option>Mixed / Other</option>
+    </select>
+    <label>Listening method</label>
+    <select id="method">
+      <option value="">Select...</option>
+      <option>AirPods / Earbuds (wireless)</option><option>Wired earbuds</option><option>Over-ear headphones</option><option>On-ear headphones</option><option>Studio monitor headphones</option><option>Other</option>
+    </select>
+    <div class="warning-box">Use headphones. Do not close or refresh this tab — your data will be lost.</div>
+    <button class="btn btn-primary" onclick="goToVolume()">Continue →</button>
+  </div>
+
+  <div id="s-volume" class="screen">
+    <div class="tag">Setup</div>
+    <h2>Volume check</h2>
+    <p>Click play to hear a test tone that bounces between your left and right ear. You should clearly hear it alternating sides. Adjust your device volume until it is comfortable but clearly audible.</p>
+    <div class="vol-preview">
+      <div class="vol-bars" id="vol-bars">
+        <div class="vol-bar" style="height:6px"></div><div class="vol-bar" style="height:10px"></div>
+        <div class="vol-bar" style="height:16px"></div><div class="vol-bar" style="height:20px"></div>
+        <div class="vol-bar" style="height:14px"></div><div class="vol-bar" style="height:8px"></div>
+        <div class="vol-bar" style="height:18px"></div><div class="vol-bar" style="height:12px"></div>
+      </div>
+      <span class="vol-label" id="vol-label">Not playing</span>
+      <button class="btn-small" id="vol-btn" onclick="toggleVolPreview()">Play</button>
+    </div>
+    <div class="info-box">If you can only hear it in one ear or both at the same time, check your headphone connection. Once set, do not adjust your volume for the rest of the test.</div>
+    <button class="btn btn-primary" onclick="stopVolPreview(); show('s-nback-practice-intro')">Sounds correct — continue →</button>
+  </div>
+
+  <div id="s-nback-practice-intro" class="screen">
+    <div class="tag practice">Practice</div>
+    <div class="condition-name" style="color:#ff9f5f;">N-back practice</div>
+    <p style="margin-top:0.5rem;">Letters appear one at a time. Each time, decide: <strong style="color:var(--text)">does it match the letter from N steps ago?</strong> The value of N changes each trial — it will always be shown on screen.</p>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:1rem;">
+      <p style="font-size:13px;margin-bottom:8px;">Example (2-back):</p>
+      <div style="display:flex;gap:8px;font-family:var(--font-display);font-size:20px;margin-bottom:8px;">
+        <span style="color:var(--muted)">B</span><span style="color:var(--muted)">K</span><span style="color:var(--accent)">B</span><span style="color:var(--muted)">T</span><span style="color:var(--accent)">K</span>
+      </div>
+      <p style="font-size:13px;">Highlighted = matches the letter N steps back. Click <strong style="color:var(--green)">Match</strong> or <strong style="color:var(--red)">No match</strong>.</p>
+    </div>
+    <div class="info-box">N will be 2, 3, or 4 — shown clearly before each trial. Practice results are not recorded.</div>
+    <button class="btn btn-primary" onclick="startPractice('nback')">Start practice →</button>
+  </div>
+
+  <div id="s-trial" class="screen">
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="trial-label">Trial 1 of 10</span>
+        <span id="condition-label-top" style="color:var(--muted)"></span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="trial-bar" style="width:0%"></div></div>
+    </div>
+    <div class="phase-banner">
+      <span id="phase-banner-label">Stroop task</span>
+      <span id="phase-banner-cond" style="color:var(--text)"></span>
+    </div>
+    <div class="sound-indicator">
+      <div class="sound-dot" id="sound-dot"></div>
+      <span id="sound-name"></span>
+    </div>
+    <div id="stroop-container" class="stroop-area">
+      <div id="stroop-word" class="stroop-word">RED</div>
+      <div class="color-grid" id="color-grid"></div>
+    </div>
+    <div id="nback-container" class="nback-area" style="display:none;">
+      <div class="nback-seq" id="nback-seq"></div>
+      <div id="nback-letter" class="nback-letter">?</div>
+      <div class="nback-hint">Does this match 2 letters ago?</div>
+      <div class="nback-btns">
+        <button class="nback-btn match" onclick="recordNback(true)">Match</button>
+        <button class="nback-btn nomatch" onclick="recordNback(false)">No match</button>
+      </div>
+      <div class="feedback" id="nback-feedback"></div>
+    </div>
+  </div>
+
+  <div id="s-break" class="screen">
+    <div class="tag" id="break-tag">Condition complete</div>
+    <h2 id="break-title"></h2>
+    <div class="stat-row" id="break-stats"></div>
+    <p id="break-msg"></p>
+    <button class="btn btn-primary" id="break-btn">Continue →</button>
+  </div>
+
+  <div id="s-between-tests" class="screen">
+    <div class="tag accent">Part 1 complete</div>
+    <h2>Stroop task done</h2>
+    <p>You have completed all 6 acoustic conditions for the Stroop task. Now you will repeat the same 6 conditions with the 2-back memory task in a new randomized order.</p>
+    <div class="info-box">Take a short break. The 2-back task is more demanding — make sure you feel focused before continuing.</div>
+    <button class="btn btn-primary" onclick="startNbackPhase()">Continue to 2-back task →</button>
+  </div>
+
+  <div id="s-submitting" class="screen">
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p style="font-family:var(--font-display);font-size:13px;color:var(--muted);margin-top:1rem;">Submitting your results...</p>
+    </div>
+  </div>
+
+  <div id="s-done" class="screen">
+    <div class="tag accent">Study complete</div>
+    <h2>Your results</h2>
+    <p>Thank you for participating. Your data has been recorded automatically.</p>
+    <div class="divider"></div>
+    <p style="font-family:var(--font-display);font-size:12px;color:#ff9f5f;margin-bottom:0.5rem;">N-back task</p>
+    <table class="results-table">
+      <thead><tr><th>Condition</th><th>Avg RT (ms)</th><th>Accuracy</th></tr></thead>
+      <tbody id="nback-results-body"></tbody>
+    </table>
+  </div>
+
+</div>
+<script>
+const SHEETS_URL = 'https://script.google.com/a/macros/usc.edu/s/AKfycbxMGjv4cJyGi2jWjdglk-7z0jK4inqqMkxRXgZgdfUfhFypsJKTDqFsWJnX_2h3sIUJ/exec';
+
+const SOUNDSCAPES = [
+  { id:'whitenoise', name:'White noise',       desc:'Broadband white noise — equal energy across all frequencies. No room character. Baseline condition.', isBaseline:true, color:'#aaaaaa', irFile:null,          vol:0.50 },
+  { id:'dry',        name:'Dry (auditorium)',   desc:'Arthur Sykes Rymer Auditorium — an acoustically treated university performance space with minimal reflections and low RT60.', isBaseline:false, color:'#c8f060', irFile:'ir_dry.wav',        vol:0.65 },
+  { id:'reverberant',name:'Reverberant (cathedral)', desc:'Lady Chapel, St Albans Cathedral — dense late reflections and long RT60. Speech washes together and takes several seconds to decay.', isBaseline:false, color:'#5fa8ff', irFile:'ir_reverberant.wav', vol:0.65 },
+  { id:'spatial',    name:'Spatial (reactor hall)', desc:'R1 Nuclear Reactor Hall — massive industrial space with complex multi-directional reflections from concrete and metal surfaces.', isBaseline:false, color:'#ff9f5f', irFile:'ir_spatial.wav',    vol:0.65 },
+  { id:'resonant',   name:'Resonant (tower)',   desc:'Clifford Tower — a narrow stone tower with parallel walls that amplify specific frequencies through standing waves and room modes.', isBaseline:false, color:'#bf8fff', irFile:'ir_resonant.wav',   vol:0.55 },
+  { id:'earlyrefl',  name:'Early reflections (stairwell)', desc:'University of York Stairway — tight concrete walls producing dense early reflections with a short decay, like a stairwell or tiled corridor.', isBaseline:false, color:'#7fffdf', irFile:'ir_earlyrefl.wav',  vol:0.72 }
+];
+
+const WORDS = ['RED','BLUE','GREEN','YELLOW'];
+const INK = { RED:'#ff5f5f', BLUE:'#5fa8ff', GREEN:'#5fffa0', YELLOW:'#ffe45f' };
+const NBACK_LETTERS = ['B','F','H','K','L','M','N','P','R','T'];
+const TRIALS = 8;
+
+let pid='', age='', lang='', upbringing='', method='';
+let stroopOrder=[], nbackOrder=[];
+let condIdx=0, trialIdx=0, trialStart=0;
+let allResults=[], condResults=[];
+let isPractice=false, currentPhase='nback';
+let audioCtx=null, chatterBuf=null, irBuffers={};
+let bgSrc=null, volPlaying=false, volAnim=null;
+let nbackSeq=[], nbackNValues=[], nbackTrial=0, currentN=2;
+
+const shuffle = a => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
+function show(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function getCtx() { if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); return audioCtx; }
+
+async function loadAudio() {
+  const ctx = getCtx();
+  const files = [
+    { key:'chatter', url:'chatter.wav' },
+    { key:'ir_dry', url:'ir_dry.wav' },
+    { key:'ir_reverberant', url:'ir_reverberant.wav' },
+    { key:'ir_spatial', url:'ir_spatial.wav' },
+    { key:'ir_resonant', url:'ir_resonant.wav' },
+    { key:'ir_earlyrefl', url:'ir_earlyrefl.wav' }
+  ];
+  const bar = document.getElementById('loading-bar');
+  const msg = document.getElementById('loading-msg');
+  try {
+    for(let i=0; i<files.length; i++) {
+      const f = files[i];
+      msg.textContent = `Loading ${f.url}...`;
+      bar.style.width = (i/files.length*100)+'%';
+      const res = await fetch(f.url);
+      const ab = await res.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(ab);
+      if(f.key==='chatter') chatterBuf=decoded;
+      else irBuffers[f.key]=decoded;
+    }
+    bar.style.width='100%';
+    setTimeout(()=>show('s-welcome'), 300);
+  } catch(e) {
+    document.getElementById('s-loading').innerHTML=`<div style="padding:2rem;text-align:center"><p style="color:#ff5f5f;font-family:var(--font-display);font-size:13px;">Failed to load audio files</p><p style="margin-top:0.5rem;color:#a0a0a0;font-size:14px;">Make sure all files are in the same folder as index.html:<br><br>chatter.wav<br>ir_dry.wav<br>ir_reverberant.wav<br>ir_spatial.wav<br>ir_resonant.wav<br>ir_earlyrefl.wav</p></div>`;
+  }
+}
+
+function stopBg() {
+  if(bgSrc){try{bgSrc.stop();}catch(e){} bgSrc=null;}
+}
+
+function playSoundscape(id, vol) {
+  stopBg();
+  if(id==='silent') return;
+  const ctx = getCtx();
+  const master = ctx.createGain();
+  master.gain.value = vol||0.6;
+  master.connect(ctx.destination);
+
+  if(id==='whitenoise') {
+    const buf=ctx.createBuffer(2,ctx.sampleRate*3,ctx.sampleRate);
+    for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
+    const src=ctx.createBufferSource(); src.buffer=buf; src.loop=true;
+    const f=ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1200; f.Q.value=0.6;
+    src.connect(f); f.connect(master); src.start(); bgSrc=src; return;
+  }
+
+  const sc = SOUNDSCAPES.find(s=>s.id===id);
+  const irKey = sc.irFile ? sc.irFile.replace('.wav','').replace('ir_','ir_') : null;
+  const irBuf = irBuffers['ir_'+id];
+
+  const src = ctx.createBufferSource();
+  src.buffer = chatterBuf;
+  src.loop = true;
+  bgSrc = src;
+
+  if(irBuf) {
+    const convolver = ctx.createConvolver();
+    convolver.buffer = irBuf;
+    const dryGain = ctx.createGain(); dryGain.gain.value = 0.2;
+    const wetGain = ctx.createGain(); wetGain.gain.value = 0.85;
+    src.connect(dryGain); dryGain.connect(master);
+    src.connect(convolver); convolver.connect(wetGain); wetGain.connect(master);
+  } else {
+    src.connect(master);
+  }
+  src.start();
+}
+
+function toggleVolPreview() {
+  const btn=document.getElementById('vol-btn'), lbl=document.getElementById('vol-label');
+  if(volPlaying){
+    stopBg(); volPlaying=false;
+    btn.textContent='Play'; btn.classList.remove('playing');
+    lbl.textContent='Not playing'; animBars(false);
+  } else {
+    const ctx=getCtx();
+    const osc=ctx.createOscillator();
+    const panner=ctx.createStereoPanner();
+    const gain=ctx.createGain();
+    osc.frequency.value=440; osc.type='sine';
+    gain.gain.value=0.25;
+    osc.connect(panner); panner.connect(gain); gain.connect(ctx.destination);
+    const lfo=ctx.createOscillator(); lfo.frequency.value=0.4;
+    const lfoGain=ctx.createGain(); lfoGain.gain.value=1.0;
+    lfo.connect(lfoGain); lfoGain.connect(panner.pan);
+    osc.start(); lfo.start();
+    bgSrc={stop:()=>{try{osc.stop();lfo.stop();}catch(e){}}};
+    volPlaying=true;
+    btn.textContent='Stop'; btn.classList.add('playing');
+    lbl.textContent='You should hear the tone bouncing left and right';
+    animBars(true);
+  }
+}
+function stopVolPreview(){if(volPlaying){stopBg();volPlaying=false;animBars(false);}}
+function animBars(on){
+  const bars=document.querySelectorAll('.vol-bar'); cancelAnimationFrame(volAnim);
+  if(!on){bars.forEach(b=>b.style.height='4px');return;}
+  function f(){bars.forEach(b=>b.style.height=(4+Math.random()*18).toFixed(0)+'px');volAnim=requestAnimationFrame(f);}f();
+}
+
+function goToVolume(){
+  pid=document.getElementById('pid').value.trim()||'unknown';
+  age=document.getElementById('age').value||'unknown';
+  lang=document.getElementById('lang').value||'unknown';
+  upbringing=document.getElementById('upbringing').value||'unknown';
+  method=document.getElementById('method').value||'unknown';
+  const nonBase=SOUNDSCAPES.slice(1);
+  nbackOrder=[0,...shuffle(nonBase.map((_,i)=>i+1))];
+  condIdx=0; currentPhase='nback';
+  show('s-volume');
+}
+
+function startPractice(type) {
+  isPractice=true; condResults=[]; trialIdx=0;
+  const dot=document.getElementById('sound-dot');
+  dot.className='sound-dot silent'; dot.style.background=null;
+  document.getElementById('sound-name').textContent='No sound (practice)';
+  document.getElementById('condition-label-top').textContent='Practice';
+  document.getElementById('trial-bar').style.background='#ff9f5f';
+  document.getElementById('trial-bar').style.width='0%';
+  document.getElementById('phase-banner-label').textContent='N-back task — practice';
+  document.getElementById('phase-banner-cond').textContent='';
+  document.getElementById('stroop-container').style.display='none';
+  document.getElementById('nback-container').style.display='block';
+  playSoundscape('silent');
+  nbackSeq=[]; nbackTrial=0; generateNbackSeq(TRIALS);
+  show('s-trial'); nextNbackTrial();
+}
+
+function showConditionIntro(){
+  const sc=SOUNDSCAPES[nbackOrder[condIdx]];
+  const num=condIdx;
+  let s=document.getElementById('s-cond-intro');
+  if(!s){s=document.createElement('div');s.id='s-cond-intro';s.className='screen';document.querySelector('.container').appendChild(s);}
+  s.innerHTML=`
+    <div class="tag ${sc.isBaseline?'':'accent'}" style="margin-bottom:1.5rem;">${sc.isBaseline?'Baseline — always first':`Condition ${num} of 5`}</div>
+    <div class="condition-name" style="color:${sc.color}">${sc.name}</div>
+    <p style="margin-top:0.25rem;font-family:var(--font-display);font-size:11px;color:var(--muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.06em;">N-back task</p>
+    <p>${sc.desc}</p>
+    <p>Complete <strong style="color:var(--text)">8 trials</strong> with this soundscape playing. N will vary between 2, 3, and 4 each trial — it will always be shown on screen.</p>
+    <button class="btn btn-primary" onclick="startCondition()">Start →</button>
+  `;
+  show('s-cond-intro');
+}
+
+function startCondition(){
+  isPractice=false; condResults=[]; trialIdx=0;
+  const sc=SOUNDSCAPES[nbackOrder[condIdx]];
+  document.getElementById('condition-label-top').textContent=sc.name;
+  document.getElementById('trial-bar').style.background=sc.color;
+  document.getElementById('trial-bar').style.width='0%';
+  const dot=document.getElementById('sound-dot');
+  dot.className='sound-dot'; dot.style.background=sc.color;
+  document.getElementById('sound-name').textContent=sc.name+' playing';
+  document.getElementById('phase-banner-label').textContent='N-back task';
+  document.getElementById('phase-banner-cond').textContent=sc.name;
+  playSoundscape(sc.id, sc.vol);
+  document.getElementById('stroop-container').style.display='none';
+  document.getElementById('nback-container').style.display='block';
+  nbackSeq=[]; nbackTrial=0; generateNbackSeq(TRIALS);
+  show('s-trial'); nextNbackTrial();
+}
+
+function nextStroopTrial(){
+  if(trialIdx>=TRIALS){isPractice?endPracticeStroop():endCondition();return;}
+  document.getElementById('trial-label').textContent=`Trial ${trialIdx+1} of ${TRIALS}`;
+  document.getElementById('trial-bar').style.width=(trialIdx/TRIALS*100)+'%';
+  const word=WORDS[Math.floor(Math.random()*WORDS.length)];
+  let ink; do{ink=WORDS[Math.floor(Math.random()*WORDS.length)];}while(ink===word);
+  const el=document.getElementById('stroop-word'); el.textContent=word; el.style.color=INK[ink];
+  const grid=document.getElementById('color-grid'); grid.innerHTML='';
+  shuffle(WORDS).forEach(c=>{
+    const b=document.createElement('button'); b.className='color-btn';
+    b.textContent=c.charAt(0)+c.slice(1).toLowerCase();
+    b.style.borderTop=`3px solid ${INK[c]}`;
+    b.onclick=()=>recordStroopResp(c,ink,word); grid.appendChild(b);
+  });
+  trialStart=performance.now();
+}
+
+function recordStroopResp(chosen,correctInk,displayWord){
+  const rt=Math.round(performance.now()-trialStart);
+  const correct=chosen===correctInk;
+  if(!isPractice) condResults.push({trial:trialIdx+1,displayWord,correctInk,chosen,rt,correct});
+  trialIdx++; nextStroopTrial();
+}
+
+function generateNbackSeq(numTrials){
+  const nValues=[2,2,3,3,4,4,2,3]; // 8 trials, mixed N values
+  nbackNValues=shuffle([...nValues]).slice(0,numTrials);
+  const maxN=Math.max(...nbackNValues);
+  nbackSeq=[];
+  for(let i=0;i<numTrials+maxN;i++){
+    if(i>0&&Math.random()<0.35){
+      const n=nbackNValues[Math.max(0,i-maxN)]||2;
+      if(i>=n) nbackSeq.push(nbackSeq[i-n]);
+      else{ let l;do{l=NBACK_LETTERS[Math.floor(Math.random()*NBACK_LETTERS.length)];}while(nbackSeq.includes(l)&&nbackSeq.length<NBACK_LETTERS.length);nbackSeq.push(l);}
+    } else {
+      let l=NBACK_LETTERS[Math.floor(Math.random()*NBACK_LETTERS.length)];
+      nbackSeq.push(l);
+    }
+  }
+  nbackTrial=0;
+}
+
+function nextNbackTrial(){
+  if(nbackTrial>=TRIALS){isPractice?endPracticeNback():endCondition();return;}
+  currentN=nbackNValues[nbackTrial]||2;
+  const seqPos=nbackTrial+currentN;
+  document.getElementById('trial-label').textContent=`Trial ${nbackTrial+1} of ${TRIALS}`;
+  document.getElementById('trial-bar').style.width=(nbackTrial/TRIALS*100)+'%';
+  document.getElementById('nback-feedback').textContent='';
+  document.getElementById('nback-feedback').className='feedback';
+  document.getElementById('nback-hint').textContent=`Does this match the letter ${currentN} step${currentN>1?'s':''} ago? (${currentN}-back)`;
+  const seqDiv=document.getElementById('nback-seq'); seqDiv.innerHTML='';
+  const showFrom=Math.max(0,seqPos-currentN-2);
+  for(let i=showFrom;i<=seqPos;i++){
+    const d=document.createElement('div');
+    d.className='seq-dot'+(i===seqPos?' current':i<seqPos?' shown':'');
+    if(i===seqPos-currentN) d.style.borderColor='#ff9f5f';
+    d.textContent=i<seqPos?nbackSeq[i]:(i===seqPos?nbackSeq[i]:'');
+    seqDiv.appendChild(d);
+  }
+  const letterEl=document.getElementById('nback-letter');
+  letterEl.textContent=nbackSeq[seqPos];
+  letterEl.style.opacity='0';
+  setTimeout(()=>letterEl.style.opacity='1',50);
+  trialStart=performance.now();
+}
+
+function recordNback(isMatch){
+  const rt=Math.round(performance.now()-trialStart);
+  const seqPos=nbackTrial+currentN;
+  const correctMatch=nbackSeq[seqPos]===nbackSeq[seqPos-currentN];
+  const correct=isMatch===correctMatch;
+  const fb=document.getElementById('nback-feedback');
+  fb.textContent=correct?'Correct':'Incorrect';
+  fb.className='feedback '+(correct?'correct':'incorrect');
+  if(!isPractice) condResults.push({trial:nbackTrial+1,n:currentN,target:nbackSeq[seqPos],nback:nbackSeq[seqPos-currentN],correctMatch,userMatch:isMatch,rt,correct});
+  nbackTrial++;
+  setTimeout(nextNbackTrial,300);
+}
+
+function endPracticeStroop(){
+  stopBg();
+  document.getElementById('break-tag').textContent='Stroop practice complete';
+  document.getElementById('break-title').textContent='Practice done';
+  document.getElementById('break-stats').innerHTML='';
+  document.getElementById('break-msg').textContent='Now practice the 2-back memory task before the real test begins.';
+  const btn=document.getElementById('break-btn');
+  btn.textContent='Continue to 2-back practice →';
+  btn.onclick=()=>show('s-nback-practice-intro');
+  show('s-break');
+}
+
+function endPracticeNback(){
+  stopBg();
+  document.getElementById('break-tag').textContent='Practice complete';
+  document.getElementById('break-title').textContent='Practice done';
+  document.getElementById('break-stats').innerHTML='';
+  document.getElementById('break-msg').textContent='The real test begins now. Baseline condition (white noise) is always first. Results will be recorded from here on.';
+  currentPhase='nback'; condIdx=0;
+  const btn=document.getElementById('break-btn');
+  btn.textContent='Start test →';
+  btn.onclick=showConditionIntro;
+  show('s-break');
+}
+
+function endCondition(){
+  stopBg();
+  const order=nbackOrder;
+  const sc=SOUNDSCAPES[order[condIdx]];
+  const avgRT=Math.round(condResults.reduce((s,r)=>s+r.rt,0)/condResults.length);
+  const acc=Math.round(condResults.filter(r=>r.correct).length/condResults.length*100);
+  allResults.push({phase:'nback',condition:sc.name,conditionId:sc.id,trials:[...condResults],avgRT,acc,order:condIdx});
+  document.getElementById('break-tag').textContent=sc.isBaseline?'Baseline complete':`Condition ${condIdx} of 5 complete`;
+  document.getElementById('break-title').textContent=sc.name+' — done';
+  document.getElementById('break-stats').innerHTML=`
+    <div class="stat-box"><div class="stat-val">${avgRT}</div><div class="stat-lbl">Avg RT (ms)</div></div>
+    <div class="stat-box"><div class="stat-val">${acc}%</div><div class="stat-lbl">Accuracy</div></div>
+    <div class="stat-box"><div class="stat-val">${condResults.filter(r=>r.correct).length}/${TRIALS}</div><div class="stat-lbl">Correct</div></div>
+  `;
+  const isLast=condIdx>=SOUNDSCAPES.length-1;
+  const btn=document.getElementById('break-btn');
+  if(isLast){
+    document.getElementById('break-msg').textContent='You have completed all conditions. Submitting results now.';
+    btn.textContent='See my results →';
+    btn.onclick=submitAndShow;
+  } else {
+    const next=SOUNDSCAPES[order[condIdx+1]];
+    document.getElementById('break-msg').textContent=`Take a short break if needed. Next: ${next.name}.`;
+    btn.textContent='Continue →';
+    btn.onclick=()=>{condIdx++;showConditionIntro();};
+  }
+  show('s-break');
+}
+
+function startNbackPhase(){
+  currentPhase='nback'; condIdx=0; showConditionIntro();
+}
+
+async function submitAndShow(){
+  show('s-submitting');
+  const rows=[['participant_id','age','language','upbringing','listening_method','phase','condition','condition_id','condition_order','trial','n_value','rt_ms','correct','detail1','detail2','detail3']];
+  allResults.forEach(r=>{
+    r.trials.forEach(t=>{
+      rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.order,t.trial,t.n||'',t.rt,t.correct?1:0,
+        t.target||t.displayWord||'', t.nback||t.correctInk||'', t.correctMatch!=null?t.correctMatch:t.chosen||'']);
+    });
+  });
+  try {
+    await fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows})});
+  } catch(e){ console.warn('Submission error:',e); }
+  showFinal();
+}
+
+function showFinal(){
+  const tbody=document.getElementById('nback-results-body'); tbody.innerHTML='';
+  allResults.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${r.condition}</td><td>${r.avgRT}</td><td class="${r.acc>=70?'good':'bad'}">${r.acc}%</td>`;
+    tbody.appendChild(tr);
+  });
+  show('s-done');
+}
+
+window.addEventListener('load', loadAudio);
+</script>
+</body>
+</html>
