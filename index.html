@@ -562,7 +562,7 @@ function nextNbackTrial(){
     const d=document.createElement('div');
     const isCurrent=i===seqPos;
     const isTarget=i===targetPos;
-    d.className='seq-dot'+(isCurrent?' current':isTarget?' target':' shown');
+    d.className='seq-dot'+(isCurrent?' current':' shown');
     // show all letters except current (shown as big letter below)
     d.textContent=isCurrent?'?':nbackSeq[i];
     seqDiv.appendChild(d);
