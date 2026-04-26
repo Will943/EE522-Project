@@ -586,18 +586,22 @@ function recordNback(isMatch){
   const rt=Math.round(performance.now()-trialStart);
   const OFFSET=4;
   const seqPos=nbackTrial+OFFSET;
+  const correctMatch = nbackSeq[seqPos] === nbackSeq[seqPos-currentN];
+  const correct = isMatch === correctMatch;
+
   const fb=document.getElementById('nback-feedback');
   fb.textContent='';
   fb.className='feedback';
 
-  
   if(!isPractice)condResults.push({
-  trial:nbackTrial+1,
-  n:currentN,
-  target:nbackSeq[seqPos],
-  nback:nbackSeq[seqPos-currentN],
-  userMatch:isMatch,
-  rt
+    trial:nbackTrial+1,
+    n:currentN,
+    target:nbackSeq[seqPos],
+    nback:nbackSeq[seqPos-currentN],
+    correctMatch,
+    userMatch:isMatch,
+    rt,
+    correct
   });
   nbackTrial++;
   setTimeout(nextNbackTrial,400);
@@ -639,7 +643,7 @@ function endCondition(){
   let acc = null;
   let correctCount = null;
 
-  if(currentPhase==='stroop'){
+   if(currentPhase==='stroop' || currentPhase==='nback'){
     correctCount = condResults.filter(r=>r.correct).length;
     acc = Math.round(correctCount/condResults.length*100);
   }
@@ -680,19 +684,36 @@ function startNbackPhase(){
 // ─── Submit ──────────────────────────────────────────────────────
 async function submitAndShow(){
   show('s-submitting');
+
   const rows=[['name','age','language','upbringing','listening_method','phase','condition','condition_id','condition_order','trial','n_value','rt_ms','correct','detail1','detail2','detail3']];
+
   allResults.forEach(r=>{
     r.trials.forEach(t=>{
       if(r.phase==='stroop'){
         rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.order,t.trial,'',t.rt,t.correct?1:0,t.displayWord,t.correctInk,t.chosen]);
       }else{
-        rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.order,t.trial,t.n,t.rt,'',t.target,t.nback,'']);
+        rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.order,t.trial,t.n,t.rt,t.correct?1:0,t.target,t.nback,t.correctMatch?1:0]);
       }
     });
   });
+
   try{
-    await fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({rows})});
-  }catch(e){console.warn('Submission error:',e);}
+    console.log("Sending rows:", rows);
+
+    const res = await fetch(SHEETS_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({rows})
+    });
+
+    console.log("Response status:", res.status);
+    const text = await res.text();
+    console.log("Server response:", text);
+
+  }catch(e){
+    console.warn('Submission error:',e);
+  }
+
   showFinal();
 }
 
