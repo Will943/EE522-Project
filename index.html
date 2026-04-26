@@ -55,6 +55,7 @@
   .results-table td { padding:10px; border-bottom:1px solid var(--border); color:var(--text); }
   .results-table tr:last-child td { border-bottom:none; }
   .good { color:var(--green); } .bad { color:var(--red); }
+  /* vol check */
   .vol-preview { display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:1rem; }
   .vol-bars { display:flex; align-items:flex-end; gap:2px; height:24px; }
   .vol-bar { width:4px; background:var(--accent); border-radius:2px; transition:height 0.08s; }
@@ -62,11 +63,13 @@
   .btn-small { padding:6px 14px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text); font-family:var(--font-body); font-size:13px; cursor:pointer; }
   .btn-small:hover { background:var(--surface); }
   .btn-small.playing { border-color:var(--accent); color:var(--accent); }
+  /* loading */
   .loading-overlay { text-align:center; padding:3rem 1rem; }
   .loading-spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 1rem; }
   @keyframes spin { to{transform:rotate(360deg)} }
   .loading-progress { width:100%; background:var(--border); border-radius:2px; height:3px; margin-top:1rem; }
   .loading-progress-fill { height:3px; background:var(--accent); border-radius:2px; transition:width 0.3s; }
+  /* stroop */
   .stroop-area { text-align:center; padding:3rem 0 2.5rem; }
   .stroop-word { font-family:var(--font-display); font-size:72px; font-weight:500; letter-spacing:-0.02em; line-height:1; margin-bottom:2.5rem; }
   .color-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:340px; margin:0 auto; }
@@ -74,6 +77,7 @@
   .color-btn:hover { border-color:#555; background:#222; }
   .color-btn:active { transform:scale(0.97); }
   .color-btn:disabled { opacity:0.35; cursor:not-allowed; transform:none !important; }
+  /* nback */
   .nback-area { text-align:center; padding:1.5rem 0 2rem; }
   .nback-n-badge { color:var(--muted); border:none; padding:0; font-size:11px; letter-spacing:0.05em }
   .nback-letter { font-family:var(--font-display); font-size:96px; font-weight:500; line-height:1; margin-bottom:0.5rem; }
@@ -82,17 +86,16 @@
   .seq-dot { width:28px; height:28px; border-radius:6px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:12px; color:var(--muted); }
   .seq-dot.current { border-color:var(--accent); color:var(--accent); background:rgba(200,240,96,0.08); }
   .seq-dot.shown { background:var(--surface); color:var(--text); }
+  .seq-dot.target { border-color:var(--border); color:var(--text); }
   .nback-btns { display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:340px; margin:0 auto; }
   .nback-btn { padding:18px 12px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-family:var(--font-display); font-size:13px; cursor:pointer; transition:all 0.1s; }
   .nback-btn:hover { background:#222; border-color:#555; }
   .nback-btn:active { transform:scale(0.97); }
   .nback-btn:disabled { opacity:0.35; cursor:not-allowed; transform:none !important; }
+  .nback-btn:disabled { opacity:0.3; cursor:not-allowed; transform:none; }
   .nback-btn.nomatch { border-color:var(--red); color:var(--red); }
   .feedback { font-family:var(--font-display); font-size:13px; text-align:center; margin-top:1rem; height:20px; }
   .feedback.correct { color:var(--green); } .feedback.incorrect { color:var(--red); }
-  /* task-order pill shown in condition intro */
-  .task-order-pill { display:inline-flex; gap:6px; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:100px; padding:5px 14px; font-family:var(--font-display); font-size:11px; color:var(--muted); margin-bottom:1.25rem; }
-  .task-order-pill span { color:var(--text); }
 </style>
 </head>
 <body>
@@ -111,7 +114,7 @@
   <div id="s-welcome" class="screen">
     <div class="tag">EE522: Final Project</div>
     <h1>Soundscape &amp;<br>Cognition</h1>
-    <p>You will complete both cognitive tasks (Stroop + N-back) for each of 6 acoustic conditions, one condition at a time. Takes about 10–15 minutes. Use headphones throughout.</p>
+    <p>You will complete two cognitive tasks (Stroop + N-back) under 6 different acoustic conditions based on real recorded spaces. Takes about 10–15 minutes. Use headphones throughout.</p>
     <div class="divider"></div>
     <label>First and last name</label>
     <input type="text" id="pid" placeholder="e.g. Jane Smith">
@@ -143,7 +146,7 @@
   <div id="s-volume" class="screen">
     <div class="tag">Setup</div>
     <h2>Volume check</h2>
-    <p>Click play to hear a tone bouncing between your left and right ear. Adjust your device volume until comfortable but clearly audible — then do not change it again.</p>
+    <p>Click play to hear a tone bouncing between your left and right ear. You should clearly hear it alternating sides. Adjust your device volume until comfortable but clearly audible — then do not change it again.</p>
     <div class="vol-preview">
       <div class="vol-bars" id="vol-bars">
         <div class="vol-bar" style="height:6px"></div><div class="vol-bar" style="height:10px"></div>
@@ -228,11 +231,20 @@
 
   <!-- BREAK SCREEN -->
   <div id="s-break" class="screen">
-    <div class="tag" id="break-tag">Task complete</div>
+    <div class="tag" id="break-tag">Condition complete</div>
     <h2 id="break-title"></h2>
     <div class="stat-row" id="break-stats"></div>
     <p id="break-msg"></p>
     <button class="btn btn-primary" id="break-btn">Continue →</button>
+  </div>
+
+  <!-- BETWEEN TESTS -->
+  <div id="s-between-tests" class="screen">
+    <div class="tag accent">Part 1 complete</div>
+    <h2>Stroop task done</h2>
+    <p>You have completed all 6 acoustic conditions for the Stroop task. Now you will repeat the same 6 conditions with the N-back memory task in a new randomized order.</p>
+    <div class="info-box">Take a short break. The N-back task is more demanding — make sure you feel focused before continuing.</div>
+    <button class="btn btn-primary" onclick="startNbackPhase()">Continue to N-back task →</button>
   </div>
 
   <!-- SUBMITTING -->
@@ -266,12 +278,12 @@
 const SHEETS_URL='https://script.google.com/macros/s/AKfycbwkrAPcxd6NSqd1btFxu1Y3LIUWx-l1pkagzGU7x-ZHvRIw0GJgNiwngZTYeBlcuUHuUA/exec';
 
 const SOUNDSCAPES=[
-  {id:'whitenoise',name:'White noise',            desc:'Broadband white noise — equal energy across all frequencies. No room character. Baseline condition.',isBaseline:true, color:'#aaaaaa',vol:0.50},
-  {id:'dry',       name:'Dry (auditorium)',        desc:'Arthur Sykes Rymer Auditorium — acoustically treated space, minimal reflections, low RT60.',        isBaseline:false,color:'#c8f060',vol:0.65},
+  {id:'whitenoise',name:'White noise',          desc:'Broadband white noise — equal energy across all frequencies. No room character. Baseline condition.',isBaseline:true, color:'#aaaaaa',vol:0.50},
+  {id:'dry',       name:'Dry (auditorium)',      desc:'Arthur Sykes Rymer Auditorium — acoustically treated space, minimal reflections, low RT60.',        isBaseline:false,color:'#c8f060',vol:0.65},
   {id:'reverberant',name:'Reverberant (cathedral)',desc:'Lady Chapel, St Albans Cathedral — long RT60, dense late reflections, speech takes seconds to decay.',isBaseline:false,color:'#5fa8ff',vol:0.65},
-  {id:'spatial',   name:'Spatial (reactor hall)', desc:'R1 Nuclear Reactor Hall — massive industrial space, complex multi-directional reflections.',           isBaseline:false,color:'#ff9f5f',vol:0.65},
-  {id:'resonant',  name:'Resonant (tower)',        desc:'Clifford Tower — narrow stone tower, standing waves amplify specific frequencies.',                   isBaseline:false,color:'#bf8fff',vol:0.55},
-  {id:'earlyrefl', name:'Early reflections (stairwell)',desc:'University of York Stairway — tight concrete walls, dense early reflections, short decay.',    isBaseline:false,color:'#7fffdf',vol:0.72}
+  {id:'spatial',   name:'Spatial (reactor hall)',desc:'R1 Nuclear Reactor Hall — massive industrial space, complex multi-directional reflections.',          isBaseline:false,color:'#ff9f5f',vol:0.65},
+  {id:'resonant',  name:'Resonant (tower)',      desc:'Clifford Tower — narrow stone tower, standing waves amplify specific frequencies.',                   isBaseline:false,color:'#bf8fff',vol:0.55},
+  {id:'earlyrefl', name:'Early reflections (stairwell)',desc:'University of York Stairway — tight concrete walls, dense early reflections, short decay.',   isBaseline:false,color:'#7fffdf',vol:0.72}
 ];
 
 const WORDS=['RED','BLUE','GREEN','YELLOW'];
@@ -280,19 +292,13 @@ const NLETTERS=['B','F','H','K','L','M','N','P','R','T'];
 const TRIALS=8;
 
 let pid='',age='',lang='',upbringing='',method='';
-
-// Interleaved design: one shared order of soundscapes.
-// For each condition, task order (stroop first vs nback first) is randomized.
-let conditionOrder=[];      // array of soundscape indices
-let taskOrderPerCond=[];    // array of ['stroop','nback'] or ['nback','stroop']
-let condIdx=0;              // which soundscape we're on (0–5)
-let taskSlot=0;             // 0 = first task of this condition, 1 = second
-
-let trialIdx=0,trialStart=0;
+let stroopOrder=[],nbackOrder=[];
+let condIdx=0,trialIdx=0,trialStart=0;
 let allResults=[],condResults=[];
 let isPractice=false,currentPhase='stroop';
 let audioCtx=null,chatterBuf=null,irBuffers={};
 let bgSrc=null,volPlaying=false,volAnim=null;
+// nback
 let nbackSeq=[],nbackNValues=[],nbackTrial=0,currentN=2;
 
 const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
@@ -396,15 +402,10 @@ function goToVolume(){
   lang=document.getElementById('lang').value||'unknown';
   upbringing=document.getElementById('upbringing').value||'unknown';
   method=document.getElementById('method').value||'unknown';
-
-  // Build condition order: baseline (index 0) always first, rest shuffled
-  const nonBase=SOUNDSCAPES.slice(1).map((_,i)=>i+1);
-  conditionOrder=[0,...shuffle(nonBase)];
-
-  // For each condition, randomly decide whether Stroop or N-back comes first
-  taskOrderPerCond=conditionOrder.map(()=>Math.random()<0.5?['stroop','nback']:['nback','stroop']);
-
-  condIdx=0;taskSlot=0;
+  const nonBase=SOUNDSCAPES.slice(1);
+  stroopOrder=[0,...shuffle(nonBase.map((_,i)=>i+1))];
+  nbackOrder=[0,...shuffle(nonBase.map((_,i)=>i+1))];
+  condIdx=0;currentPhase='stroop';
   show('s-volume');
 }
 
@@ -438,34 +439,27 @@ function startPractice(type){
 }
 
 // ─── Condition intro ─────────────────────────────────────────────
-// Shows intro for the current condition (both tasks under this soundscape).
 function showConditionIntro(){
-  const sc=SOUNDSCAPES[conditionOrder[condIdx]];
-  const taskA=taskOrderPerCond[condIdx][0];
-  const taskB=taskOrderPerCond[condIdx][1];
-  const labelA=taskA==='stroop'?'Stroop':'N-back';
-  const labelB=taskB==='stroop'?'Stroop':'N-back';
-  const condNum=condIdx+1; // 1-based for display
-
+  const order=currentPhase==='stroop'?stroopOrder:nbackOrder;
+  const sc=SOUNDSCAPES[order[condIdx]];
+  const phaseLabel=currentPhase==='stroop'?'Stroop task':'N-back task';
   let s=document.getElementById('s-cond-intro');
   if(!s){s=document.createElement('div');s.id='s-cond-intro';s.className='screen';document.querySelector('.container').appendChild(s);}
   s.innerHTML=`
-    <div class="tag ${sc.isBaseline?'':'accent'}">${sc.isBaseline?'Baseline — always first':'Condition '+condNum+' of 6'}</div>
+    <div class="tag ${sc.isBaseline?'':'accent'}" style="margin-bottom:1.5rem;">${sc.isBaseline?'Baseline — always first':`Condition ${condIdx} of 5`}</div>
     <div class="condition-name" style="color:${sc.color}">${sc.name}</div>
-    <p style="margin-top:0.25rem;font-size:13px;color:var(--muted);margin-bottom:1rem;">${sc.desc}</p>
-    <div class="task-order-pill">Task order: <span>${labelA}</span> → <span>${labelB}</span></div>
-    <p>Complete <strong style="color:var(--text)">8 trials of each task</strong> while this soundscape plays. The audio will stay on between tasks.</p>
-    <button class="btn btn-primary" onclick="startTaskSlot()">Start →</button>
+    <p style="margin-top:0.25rem;font-family:var(--font-display);font-size:11px;color:var(--muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.06em;">${phaseLabel}</p>
+    <p>${sc.desc}</p>
+    <p>Complete <strong style="color:var(--text)">8 trials</strong> with this soundscape playing.</p>
+    <button class="btn btn-primary" onclick="startCondition()">Start →</button>
   `;
   show('s-cond-intro');
 }
 
-// ─── Start a single task slot (one of the two tasks within a condition) ───
-function startTaskSlot(){
+function startCondition(){
   isPractice=false;condResults=[];trialIdx=0;nbackTrial=0;
-  currentPhase=taskOrderPerCond[condIdx][taskSlot];
-  const sc=SOUNDSCAPES[conditionOrder[condIdx]];
-
+  const order=currentPhase==='stroop'?stroopOrder:nbackOrder;
+  const sc=SOUNDSCAPES[order[condIdx]];
   document.getElementById('condition-label-top').textContent=sc.name;
   document.getElementById('trial-bar').style.background=sc.color;
   document.getElementById('trial-bar').style.width='0%';
@@ -474,11 +468,7 @@ function startTaskSlot(){
   document.getElementById('sound-name').textContent=sc.name+' playing';
   document.getElementById('phase-banner-label').textContent=currentPhase==='stroop'?'Stroop task':'N-back task';
   document.getElementById('phase-banner-cond').textContent=sc.name;
-
-  // Keep audio running between task slots in same condition;
-  // only (re)start if this is the first slot of the condition.
-  if(taskSlot===0) playSoundscape(sc.id,sc.vol);
-
+  playSoundscape(sc.id,sc.vol);
   if(currentPhase==='stroop'){
     document.getElementById('stroop-container').style.display='block';
     document.getElementById('nback-container').style.display='none';
@@ -495,7 +485,7 @@ function startTaskSlot(){
 
 // ─── STROOP ──────────────────────────────────────────────────────
 function nextStroopTrial(){
-  if(trialIdx>=TRIALS){endTaskSlot();return;}
+  if(trialIdx>=TRIALS){isPractice?endPracticeStroop():endCondition();return;}
   document.getElementById('trial-label').textContent=`Trial ${trialIdx+1} of ${TRIALS}`;
   document.getElementById('trial-bar').style.width=(trialIdx/TRIALS*100)+'%';
   const word=WORDS[Math.floor(Math.random()*WORDS.length)];
@@ -510,6 +500,7 @@ function nextStroopTrial(){
     b.onclick=()=>recordStroop(c,ink,word);
     grid.appendChild(b);
   });
+  // small delay ensures word is painted before timer starts
   setTimeout(()=>{
     trialStart=performance.now();
     grid.querySelectorAll('button').forEach(b=>b.disabled=false);
@@ -519,23 +510,27 @@ function nextStroopTrial(){
 function recordStroop(chosen,correctInk,displayWord){
   const rt=Math.round(performance.now()-trialStart);
   const correct=chosen===correctInk;
-  condResults.push({trial:trialIdx+1,displayWord,correctInk,chosen,rt,correct});
+  if(!isPractice)condResults.push({trial:trialIdx+1,displayWord,correctInk,chosen,rt,correct});
   trialIdx++;
   nextStroopTrial();
 }
 
 // ─── N-BACK ──────────────────────────────────────────────────────
+// Build a flat sequence of length TRIALS+4 (maxN=4 buffer at start)
+// so every trial[i] can look back up to 4 positions safely.
 function buildNbackSeq(){
+  // shuffle a pool of N values: 3×2-back, 3×3-back, 2×4-back
   const pool=[2,2,2,3,3,3,4,4];
   nbackNValues=shuffle([...pool]);
-  const OFFSET=4;
+  const OFFSET=4; // all trials index into seq[trial+OFFSET]
   const seqLen=TRIALS+OFFSET;
   nbackSeq=[];
   for(let i=0;i<seqLen;i++){
-    const trialI=i-OFFSET;
-    const n=trialI>=0?nbackNValues[trialI]:2;
+    // 30% chance of placing a deliberate match at the N for this slot
+    const trialIdx=i-OFFSET;
+    const n=trialIdx>=0?nbackNValues[trialIdx]:2;
     if(i>=n && Math.random()<0.35){
-      nbackSeq.push(nbackSeq[i-n]);
+      nbackSeq.push(nbackSeq[i-n]); // deliberate match
     }else{
       nbackSeq.push(NLETTERS[Math.floor(Math.random()*NLETTERS.length)]);
     }
@@ -544,32 +539,45 @@ function buildNbackSeq(){
 }
 
 function nextNbackTrial(){
-  if(nbackTrial>=TRIALS){endTaskSlot();return;}
+  if(nbackTrial>=TRIALS){isPractice?endPracticeNback():endCondition();return;}
+
   currentN=nbackNValues[nbackTrial];
   const OFFSET=4;
   const seqPos=nbackTrial+OFFSET;
   const targetPos=seqPos-currentN;
+
   document.getElementById('trial-label').textContent=`Trial ${nbackTrial+1} of ${TRIALS}`;
   document.getElementById('trial-bar').style.width=(nbackTrial/TRIALS*100)+'%';
   document.getElementById('nback-feedback').textContent='';
   document.getElementById('nback-feedback').className='feedback';
+
+  // update N badge and hint
   document.getElementById('nback-n-badge').textContent=currentN+'-back';
-  document.getElementById('nback-hint').textContent='Does this match the letter '+currentN+' step'+(currentN>1?'s':'')+' ago?';
+  document.getElementById('nback-hint').textContent=
+    'Does this match the letter '+currentN+' step'+(currentN>1?'s':'')+' ago?';
+
+  // show sequence: from targetPos-1 to seqPos
   const seqDiv=document.getElementById('nback-seq');seqDiv.innerHTML='';
   for(let i=Math.max(0,targetPos-1);i<=seqPos;i++){
     const d=document.createElement('div');
     const isCurrent=i===seqPos;
+    const isTarget=i===targetPos;
     d.className='seq-dot'+(isCurrent?' current':' shown');
+    // show all letters except current (shown as big letter below)
     d.textContent=isCurrent?'?':nbackSeq[i];
     seqDiv.appendChild(d);
   }
+
+  // disable buttons briefly so user can't click before letter renders
   const btns=document.querySelectorAll('.nback-btn');
   btns.forEach(b=>b.disabled=true);
+
+  // show the letter after a short guaranteed delay so it's always visible
   const letterEl=document.getElementById('nback-letter');
   letterEl.textContent='–';
   setTimeout(()=>{
     letterEl.textContent=nbackSeq[seqPos];
-    trialStart=performance.now();
+    trialStart=performance.now(); // timer starts when letter is shown
     btns.forEach(b=>b.disabled=false);
   },150);
 }
@@ -578,14 +586,28 @@ function recordNback(isMatch){
   const rt=Math.round(performance.now()-trialStart);
   const OFFSET=4;
   const seqPos=nbackTrial+OFFSET;
-  const correctMatch=nbackSeq[seqPos]===nbackSeq[seqPos-currentN];
-  const correct=isMatch===correctMatch;
-  condResults.push({trial:nbackTrial+1,n:currentN,target:nbackSeq[seqPos],nback:nbackSeq[seqPos-currentN],correctMatch,userMatch:isMatch,rt,correct});
+  const correctMatch = nbackSeq[seqPos] === nbackSeq[seqPos-currentN];
+  const correct = isMatch === correctMatch;
+
+  const fb=document.getElementById('nback-feedback');
+  fb.textContent='';
+  fb.className='feedback';
+
+  if(!isPractice)condResults.push({
+    trial:nbackTrial+1,
+    n:currentN,
+    target:nbackSeq[seqPos],
+    nback:nbackSeq[seqPos-currentN],
+    correctMatch,
+    userMatch:isMatch,
+    rt,
+    correct
+  });
   nbackTrial++;
   setTimeout(nextNbackTrial,400);
 }
 
-// ─── Practice endings ────────────────────────────────────────────
+// ─── End practice ────────────────────────────────────────────────
 function endPracticeStroop(){
   stopBg();
   document.getElementById('break-tag').textContent='Stroop practice complete';
@@ -603,134 +625,92 @@ function endPracticeNback(){
   document.getElementById('break-tag').textContent='Practice complete';
   document.getElementById('break-title').textContent='Both practices done';
   document.getElementById('break-stats').innerHTML='';
-  document.getElementById('break-msg').textContent='The real test begins now. Baseline (white noise) is always first. For each soundscape you will complete both tasks back-to-back. Results are recorded from here on.';
-  condIdx=0;taskSlot=0;
+  document.getElementById('break-msg').textContent='The real test begins now. Baseline (white noise) is always first. Results will be recorded from here on.';
+  currentPhase='stroop';condIdx=0;
   const btn=document.getElementById('break-btn');
-  btn.textContent='Start first condition →';
+  btn.textContent='Start Stroop test →';
   btn.onclick=showConditionIntro;
   show('s-break');
 }
 
-// ─── End of one task slot within a condition ─────────────────────
-function endTaskSlot(){
-  const sc=SOUNDSCAPES[conditionOrder[condIdx]];
+// ─── End condition ───────────────────────────────────────────────
+function endCondition(){
+  stopBg();
+  const order=currentPhase==='stroop'?stroopOrder:nbackOrder;
+  const sc=SOUNDSCAPES[order[condIdx]];
   const avgRT=Math.round(condResults.reduce((s,r)=>s+r.rt,0)/condResults.length);
-  const correctCount=condResults.filter(r=>r.correct).length;
-  const acc=Math.round(correctCount/condResults.length*100);
 
-  // Save results for this phase
-  allResults.push({
-    phase:currentPhase,
-    condition:sc.name,
-    conditionId:sc.id,
-    conditionOrder:condIdx,
-    taskSlot,
-    trials:[...condResults],
-    avgRT,acc
-  });
+  let acc = null;
+  let correctCount = null;
 
-  const isSecondSlot=taskSlot===1;
-  const phaseLabel=currentPhase==='stroop'?'Stroop':'N-back';
-  const nextTaskLabel=taskOrderPerCond[condIdx][1]==='stroop'?'Stroop':'N-back';
+   if(currentPhase==='stroop' || currentPhase==='nback'){
+    correctCount = condResults.filter(r=>r.correct).length;
+    acc = Math.round(correctCount/condResults.length*100);
+  }
+  
+  allResults.push({phase:currentPhase,condition:sc.name,conditionId:sc.id,trials:[...condResults],avgRT,acc,order:condIdx});
 
-  document.getElementById('break-tag').textContent=phaseLabel+' done — '+sc.name;
-  document.getElementById('break-title').textContent=phaseLabel+' complete';
+  document.getElementById('break-tag').textContent=sc.isBaseline?'Baseline complete':`Condition ${condIdx} of 5 complete`;
+  document.getElementById('break-title').textContent=sc.name+' — done';
   document.getElementById('break-stats').innerHTML=`
-    <div class="stat-box"><div class="stat-val">${avgRT}</div><div class="stat-lbl">Avg RT (ms)</div></div>
-    <div class="stat-box"><div class="stat-val">${acc}%</div><div class="stat-lbl">Accuracy</div></div>
-    <div class="stat-box"><div class="stat-val">${correctCount}/${TRIALS}</div><div class="stat-lbl">Correct</div></div>
-  `;
+  <div class="stat-box"><div class="stat-val">${avgRT}</div><div class="stat-lbl">Avg RT (ms)</div></div>
+  <div class="stat-box"><div class="stat-val">${acc!==null?acc+'%':'—'}</div><div class="stat-lbl">Accuracy</div></div>
+  <div class="stat-box"><div class="stat-val">${correctCount!==null?correctCount+'/'+TRIALS:'—'}</div><div class="stat-lbl">Correct</div></div>
+`;
 
+  const isLast=condIdx>=SOUNDSCAPES.length-1;
   const btn=document.getElementById('break-btn');
-
-  if(!isSecondSlot){
-    // Move to second task of same condition (audio keeps playing)
-    document.getElementById('break-msg').textContent=
-      `Now complete the ${nextTaskLabel} task under the same soundscape: ${sc.name}.`;
-    btn.textContent='Continue to '+nextTaskLabel+' →';
-    btn.onclick=()=>{taskSlot=1;startTaskSlot();};
-  } else {
-    // Both tasks done for this condition
-    stopBg();
-    const isLastCond=condIdx>=SOUNDSCAPES.length-1;
-    if(isLastCond){
-      document.getElementById('break-msg').textContent='All 6 conditions complete. Submitting your results now.';
-      btn.textContent='See my results →';
-      btn.onclick=submitAndShow;
-    }else{
-      const nextSc=SOUNDSCAPES[conditionOrder[condIdx+1]];
-      document.getElementById('break-msg').textContent=
-        `Both tasks complete for "${sc.name}". Take a short break if needed. Next: ${nextSc.name}.`;
-      btn.textContent='Continue to next condition →';
-      btn.onclick=()=>{condIdx++;taskSlot=0;showConditionIntro();};
-    }
+  if(isLast&&currentPhase==='stroop'){
+    document.getElementById('break-msg').textContent='Stroop task complete. Take a short break before the N-back task.';
+    btn.textContent='Continue to N-back task →';
+    btn.onclick=()=>show('s-between-tests');
+  }else if(isLast&&currentPhase==='nback'){
+    document.getElementById('break-msg').textContent='All conditions complete. Submitting your results now.';
+    btn.textContent='See my results →';
+    btn.onclick=submitAndShow;
+  }else{
+    const next=SOUNDSCAPES[order[condIdx+1]];
+    document.getElementById('break-msg').textContent=`Take a short break if needed. Next: ${next.name}.`;
+    btn.textContent='Continue →';
+    btn.onclick=()=>{condIdx++;showConditionIntro();};
   }
   show('s-break');
 }
 
-// ─── Practice route ──────────────────────────────────────────────
-// Overrides startTaskSlot flow for practice mode
-const _origStart=startPractice;
-function startPractice(type){
-  isPractice=true;condResults=[];trialIdx=0;nbackTrial=0;
-  currentPhase=type;
-  const dot=document.getElementById('sound-dot');
-  dot.className='sound-dot silent';dot.style.background='';
-  document.getElementById('sound-name').textContent='No sound (practice)';
-  document.getElementById('condition-label-top').textContent='Practice';
-  document.getElementById('trial-bar').style.width='0%';
-  document.getElementById('phase-banner-cond').textContent='';
-  playSoundscape('silent');
-  if(type==='stroop'){
-    document.getElementById('trial-bar').style.background='#5fa8ff';
-    document.getElementById('phase-banner-label').textContent='Stroop — practice';
-    document.getElementById('stroop-container').style.display='block';
-    document.getElementById('nback-container').style.display='none';
-    show('s-trial');
-    nextStroopTrial();
-  }else{
-    document.getElementById('trial-bar').style.background='#ff9f5f';
-    document.getElementById('phase-banner-label').textContent='N-back — practice';
-    document.getElementById('stroop-container').style.display='none';
-    document.getElementById('nback-container').style.display='block';
-    buildNbackSeq();
-    show('s-trial');
-    nextNbackTrial();
-  }
-}
-
-// endTaskSlot delegates to practice endings when isPractice=true
-const _origEndTaskSlot=endTaskSlot;
-function endTaskSlot(){
-  if(isPractice){
-    if(currentPhase==='stroop') endPracticeStroop();
-    else endPracticeNback();
-    return;
-  }
-  _origEndTaskSlot();
+function startNbackPhase(){
+  currentPhase='nback';condIdx=0;showConditionIntro();
 }
 
 // ─── Submit ──────────────────────────────────────────────────────
 async function submitAndShow(){
   show('s-submitting');
 
-  const rows=[['name','age','language','upbringing','listening_method','phase','condition','condition_id','condition_order','task_slot','trial','n_value','rt_ms','correct','detail1','detail2','detail3']];
+  const rows=[['name','age','language','upbringing','listening_method','phase','condition','condition_id','condition_order','trial','n_value','rt_ms','correct','detail1','detail2','detail3']];
 
   allResults.forEach(r=>{
     r.trials.forEach(t=>{
       if(r.phase==='stroop'){
-        rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.conditionOrder,r.taskSlot,t.trial,'',t.rt,t.correct?1:0,t.displayWord,t.correctInk,t.chosen]);
+        rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.order,t.trial,'',t.rt,t.correct?1:0,t.displayWord,t.correctInk,t.chosen]);
       }else{
-        rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.conditionOrder,r.taskSlot,t.trial,t.n,t.rt,t.correct?1:0,t.target,t.nback,t.correctMatch?1:0]);
+        rows.push([pid,age,lang,upbringing,method,r.phase,r.condition,r.conditionId,r.order,t.trial,t.n,t.rt,t.correct?1:0,t.target,t.nback,t.correctMatch?1:0]);
       }
     });
   });
 
   try{
-    await fetch(SHEETS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({rows})});
-  }catch(e){
-    console.warn('Submission error:',e);
-  }
+  console.log("Sending rows:", rows);
+
+  await fetch(SHEETS_URL,{
+    method:'POST',
+    mode:'no-cors',
+    body:JSON.stringify({rows})
+  });
+
+  console.log("Request sent (no-cors, response not readable)");
+
+}catch(e){
+  console.warn('Submission error:', e);
+}
 
   showFinal();
 }
@@ -740,7 +720,7 @@ function showFinal(){
     const tbody=document.getElementById(id);tbody.innerHTML='';
     allResults.filter(r=>r.phase===phase).forEach(r=>{
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${r.condition}</td><td>${r.avgRT}</td><td>${r.acc!==null?r.acc+'%':'—'}</td>`;
+      tr.innerHTML=`<td>${r.condition}</td><td>${r.avgRT}</td><td>${r.acc!==null ? r.acc+'%' : '—'}</td>`;
       tbody.appendChild(tr);
     });
   };
