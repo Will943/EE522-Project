@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Soundscape Cognitive Study Test</title>
+<title>Soundscape Cognitive Study</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -698,21 +698,19 @@ async function submitAndShow(){
   });
 
   try{
-    console.log("Sending rows:", rows);
+  console.log("Sending rows:", rows);
 
-    const res = await fetch(SHEETS_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({rows})
-    });
+  await fetch(SHEETS_URL,{
+    method:'POST',
+    mode:'no-cors',
+    body:JSON.stringify({rows})
+  });
 
-    console.log("Response status:", res.status);
-    const text = await res.text();
-    console.log("Server response:", text);
+  console.log("Request sent (no-cors, response not readable)");
 
-  }catch(e){
-    console.warn('Submission error:',e);
-  }
+}catch(e){
+  console.warn('Submission error:', e);
+}
 
   showFinal();
 }
