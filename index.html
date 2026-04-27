@@ -598,8 +598,8 @@ function playSoundscape(id,vol){
   const irBuf=irBuffers['ir_'+id];
   if(irBuf){
     const conv=ctx.createConvolver();conv.buffer=irBuf;
-    const dry=ctx.createGain();dry.gain.value=0.2;
-    const wet=ctx.createGain();wet.gain.value=0.85;
+    const dry=ctx.createGain();dry.gain.value=0.1;
+    const wet=ctx.createGain();wet.gain.value=1.0;
     src.connect(dry);dry.connect(master);
     src.connect(conv);conv.connect(wet);wet.connect(master);
   }else{src.connect(master);}
