@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cognitive Performance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f5f3; color: #1a1a1a; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.3rem; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin: 1.8rem 0 0.6rem; }
+  .card { background: #fff; border-radius: 10px; padding: 1.2rem; border: 1px solid #e8e8e6; margin-bottom: 1rem; }
+  textarea { width: 100%; height: 160px; font-family: monospace; font-size: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fafaf8; color: #1a1a1a; resize: vertical; }
+  textarea:focus { outline: none; border-color: #3266ad; }
+  .hint { font-size: 12px; color: #999; margin-top: 6px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  button { padding: 7px 18px; font-size: 13px; font-weight: 500; cursor: pointer; border-radius: 8px; border: 1px solid #ccc; background: #fff; color: #1a1a1a; }
+  button:hover { background: #f0f0ee; }
+  button.primary { background: #3266ad; color: #fff; border-color: #3266ad; }
+  button.primary:hover { background: #285a9e; }
+  .err { font-size: 13px; color: #c0392b; margin-top: 8px; min-height: 16px; }
+  .debug { font-size: 11px; color: #888; margin-top: 6px; font-family: monospace; white-space: pre-wrap; max-height: 120px; overflow-y: auto; background: #f5f5f3; padding: 8px; border-radius: 6px; display: none; }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 0.8rem 0 1.2rem; }
+  .mc { background: #f5f5f3; border-radius: 8px; padding: 0.85rem 1rem; }
+  .mc-label { font-size: 12px; color: #888; margin-bottom: 3px; }
+  .mc-val { font-size: 22px; font-weight: 500; }
+  .mc-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .tabs { display: flex; gap: 6px; margin: 0.8rem 0; flex-wrap: wrap; }
+  .tab { padding: 5px 15px; font-size: 13px; cursor: pointer; border-radius: 8px; border: 1px solid #ccc; background: #fff; color: #666; }
+  .tab.active { background: #3266ad; color: #fff; border-color: #3266ad; font-weight: 500; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; font-size: 12px; color: #666; }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .ldot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .chart-box { background: #fff; border-radius: 10px; padding: 1rem 1.2rem 1.2rem; border: 1px solid #e8e8e6; margin-bottom: 1rem; }
+  .chart-title { font-size: 13px; font-weight: 500; color: #444; margin-bottom: 8px; }
+  .charts-area { display: none; }
+  .charts-area.visible { display: block; }
+  .part-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+  .part-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .part-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .part-name { font-size: 14px; font-weight: 500; }
+  .part-stats { font-size: 12px; color: #888; }
+  .mini-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .mini-mc { background: #f5f5f3; border-radius: 6px; padding: 6px 10px; }
+  .mini-mc-label { font-size: 11px; color: #999; }
+  .mini-mc-val { font-size: 15px; font-weight: 500; margin-top: 1px; }
+  hr.divider { border: none; border-top: 1px solid #e8e8e6; margin: 2rem 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+  .wordcloud-wrap { display: flex; flex-wrap: wrap; gap: 8px; padding: 1rem 0.5rem; align-items: center; justify-content: center; min-height: 140px; }
+  .wc-word { border-radius: 4px; padding: 2px 5px; line-height: 1.4; cursor: default; }
+  .sound-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 0.5rem; }
+  .sound-card { background: #f5f5f3; border-radius: 8px; padding: 0.8rem; border: 1px solid #e8e8e6; }
+  .sound-card-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .sound-card-emotion { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .sound-card-bar-wrap { height: 6px; background: #e8e8e6; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+  .sound-card-bar { height: 100%; border-radius: 3px; }
+  .sound-card-conf { font-size: 11px; color: #999; }
+  .sound-card-words { font-size: 11px; color: #777; margin-top: 5px; font-style: italic; line-height: 1.5; }
+  .heatmap-wrap { overflow-x: auto; }
+  .heatmap-table { border-collapse: collapse; font-size: 12px; width: 100%; }
+  .heatmap-table th { font-size: 11px; font-weight: 500; color: #888; padding: 4px 8px; text-align: center; }
+  .heatmap-table td { padding: 6px 10px; text-align: center; border-radius: 4px; font-size: 12px; font-weight: 500; min-width: 70px; }
+  .heatmap-table .row-label { text-align: left; font-weight: 400; color: #555; white-space: nowrap; }
+  .conf-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .conf-label { font-size: 12px; color: #555; min-width: 90px; }
+  .conf-bar-bg { flex: 1; height: 8px; background: #e8e8e6; border-radius: 4px; overflow: hidden; }
+  .conf-bar-fill { height: 100%; border-radius: 4px; }
+  .conf-val { font-size: 12px; color: #888; min-width: 28px; text-align: right; }
+  .no-data { font-size: 13px; color: #aaa; padding: 1rem 0; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Cognitive + Emotional Response Dashboard</h1>
+<p class="subtitle">Paste your full data — the parser handles multiple header rows and both data types automatically.</p>
+
+<div class="card">
+  <div class="section-label">Paste your data</div>
+  <textarea id="csvInput" placeholder="Paste your full tab-separated or comma-separated data here, including all header rows..."></textarea>
+  <p class="hint">Just paste everything as-is — multiple header rows, mixed data types, extra blank rows — it all gets handled automatically.</p>
+  <div class="btn-row">
+    <button class="primary" id="parseBtn">Generate charts</button>
+    <button id="clearBtn">Clear</button>
+    <button id="debugBtn" style="font-size:12px;padding:5px 12px;color:#888">Show debug log</button>
+  </div>
+  <div id="errMsg" class="err"></div>
+  <div id="debugLog" class="debug"></div>
+</div>
+
+<div class="charts-area" id="chartsArea">
+
+  <div id="cogSection">
+    <div class="section-label">Cognitive overview</div>
+    <div class="metric-grid" id="metricCards"></div>
+    <div class="section-label">Group: RT &amp; Accuracy by condition</div>
+    <div class="tabs" id="taskTabs">
+      <button class="tab active" data-task="both">Both tasks</button>
+      <button class="tab" data-task="stroop">Stroop only</button>
+      <button class="tab" data-task="nback">N-back only</button>
+    </div>
+    <div class="two-col">
+      <div class="chart-box">
+        <div class="chart-title">Mean RT (ms) by condition</div>
+        <div class="legend" id="legend1"></div>
+        <div style="position:relative;height:260px"><canvas id="rtChart" role="img" aria-label="Mean RT by condition">RT chart</canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Accuracy (%) by condition</div>
+        <div class="legend" id="legend2"></div>
+        <div style="position:relative;height:260px"><canvas id="accChart" role="img" aria-label="Accuracy by condition">Acc chart</canvas></div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="chart-box">
+        <div class="chart-title">Per-participant RT profile</div>
+        <div class="legend" id="legend3"></div>
+        <div style="position:relative;height:260px"><canvas id="partLineChart" role="img" aria-label="Per participant RT">Part RT</canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Per-participant accuracy profile</div>
+        <div class="legend" id="legend4"></div>
+        <div style="position:relative;height:260px"><canvas id="partAccLineChart" role="img" aria-label="Per participant accuracy">Part Acc</canvas></div>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="section-label">Per-participant breakdown</div>
+    <div class="part-grid" id="partGrid"></div>
+  </div>
+
+  <div id="emoSection" style="display:none">
+    <hr class="divider">
+    <div class="section-label">Emotional responses</div>
+    <div class="two-col">
+      <div class="chart-box">
+        <div class="chart-title">Forced-choice emotion distribution</div>
+        <div style="position:relative;height:260px"><canvas id="emoDonut" role="img" aria-label="Emotion distribution">Donut</canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Mean confidence per emotion (1–7)</div>
+        <div id="confBars" style="padding-top:8px"></div>
+      </div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Per-sound summary</div>
+      <div class="sound-grid" id="soundCards"></div>
+    </div>
+    <div class="chart-box" id="heatmapBox" style="display:none">
+      <div class="chart-title">Participant × sound emotion heatmap</div>
+      <div class="heatmap-wrap"><table class="heatmap-table" id="heatmapTable"></table></div>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Open-response word cloud (all participants)</div>
+      <div class="wordcloud-wrap" id="wordCloud"></div>
+    </div>
+    <div class="chart-box" id="partWCBox" style="display:none">
+      <div class="chart-title">Word clouds per participant</div>
+      <div id="partWCGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:0.5rem"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const COND_LABELS = {whitenoise:'White noise',dry:'Dry (auditorium)',resonant:'Resonant (tower)',earlyrefl:'Early reflections',reverberant:'Reverberant (cathedral)',rawspeech:'Raw speech',spatial:'Spatial (reactor hall)'};
+const COND_ORDER_DEFAULT = ['whitenoise','dry','resonant','earlyrefl','reverberant','rawspeech','spatial'];
+const PART_PALETTE = ['#3266ad','#1D9E75','#D85A30','#7F77DD','#BA7517','#D4537E','#555','#E24B4A'];
+const PART_PALE = ['rgba(50,102,173,0.12)','rgba(29,158,117,0.12)','rgba(216,90,48,0.12)','rgba(127,119,221,0.12)','rgba(186,117,23,0.12)','rgba(212,83,126,0.12)'];
+const EMOTION_COLORS = {'happiness':'#EF9F27','sadness':'#378ADD','fear':'#7F77DD','anger':'#E24B4A','surprise':'#1D9E75','disgust':'#D85A30','contempt':'#D4537E'};
+const STOP_WORDS = new Set(['a','an','the','and','or','but','i','it','is','was','to','of','in','that','this','for','on','with','so','as','be','are','at','by','from','my','me','feel','felt','feeling','sounds','sound','like','very','quite','bit','little','kind','sort','made','makes','also','its','has','not','no','s','m','re','ve','ll','t','d']);
+
+let logs = [];
+function log(msg){ logs.push(msg); }
+
+function mean(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function pct(arr){ return arr.length ? arr.filter(v=>v===1).length/arr.length*100 : 0; }
+function shortLabel(c){ return (COND_LABELS[c]||c).replace(/ \(.*\)/,''); }
+
+function normalizeEmotion(str){
+  if(!str) return 'unknown';
+  const s = str.toLowerCase().replace(/[^a-z\s]/g,' ').trim();
+  if(s.includes('happi')||s.includes('joy')) return 'happiness';
+  if(s.includes('sad')||s.includes('grief')||s.includes('funeral')||s.includes('sorrow')) return 'sadness';
+  if(s.includes('fear')||s.includes('scared')||s.includes('fright')||s.includes('anxious')||s.includes('terror')) return 'fear';
+  if(s.includes('anger')||s.includes('angry')||s.includes('rage')||s.includes('mad')||s.includes('annoy')||s.includes('pissed')) return 'anger';
+  if(s.includes('surpri')||s.includes('alert')||s.includes('shock')||s.includes('confus')) return 'surprise';
+  if(s.includes('disgust')) return 'disgust';
+  return s.split(' ')[0]||str;
+}
+function emoColor(e){ return EMOTION_COLORS[normalizeEmotion(e)]||'#888780'; }
+function setLegend(id,items){ document.getElementById(id).innerHTML=items.map(i=>`<span><span class="ldot" style="background:${i.color}"></span>${i.label}</span>`).join(''); }
+
+// ── SMART MULTI-HEADER PARSER ─────────────────────────────────────────────────
+// Splits the raw text into segments, each starting with its own header row.
+// A line is treated as a header if it contains known column keywords.
+function isHeaderRow(line, sep){
+  const cols = line.split(sep).map(c=>c.trim().toLowerCase().replace(/"/g,''));
+  const cogKeys = ['rt_ms','task_type','condition_id','condition','correct'];
+  const emoKeys = ['open_response','force_choice','sound_label'];
+  const general = ['name','phase','part'];
+  const allKeys = [...cogKeys,...emoKeys,...general];
+  const matches = cols.filter(c=>allKeys.includes(c)).length;
+  return matches >= 2;
+}
+
+function parseAll(rawText){
+  const sep = rawText.split('\n')[0].includes('\t') ? '\t' : ',';
+  const lines = rawText.split('\n');
+
+  // find all header line indices
+  const headerIndices = [];
+  lines.forEach((line,i)=>{
+    if(line.trim() && isHeaderRow(line, sep)) headerIndices.push(i);
+  });
+
+  log(`Found ${headerIndices.length} header row(s) at lines: ${headerIndices.join(', ')}`);
+
+  if(!headerIndices.length) return {trials:[], emotional:[]};
+
+  const segments = [];
+  headerIndices.forEach((hIdx, si)=>{
+    const nextH = headerIndices[si+1] || lines.length;
+    const headers = lines[hIdx].split(sep).map(h=>h.trim().replace(/"/g,'').toLowerCase());
+    const dataLines = lines.slice(hIdx+1, nextH).filter(l=>l.trim() && !isHeaderRow(l,sep));
+    const rows = dataLines.map(line=>{
+      const cols = line.split(sep).map(c=>c.trim().replace(/"/g,''));
+      const obj = {};
+      headers.forEach((h,j)=>{ obj[h] = cols[j]||''; });
+      return obj;
+    });
+    segments.push({headers, rows});
+    log(`Segment ${si}: headers=[${headers.join(', ')}], ${rows.length} rows`);
+  });
+
+  const trials = [], emotional = [];
+
+  segments.forEach(seg=>{
+    const h = seg.headers;
+    const hasCog = h.includes('task_type') && h.includes('rt_ms');
+    const hasEmo = h.includes('open_response') || h.includes('force_choice') || h.includes('sound_label');
+
+    seg.rows.forEach(r=>{
+      if(hasCog){
+        const task = (r['task_type']||'').toLowerCase();
+        const rt = parseFloat(r['rt_ms']);
+        if((task==='stroop'||task==='nback') && !isNaN(rt)){
+          const correct = parseInt(r['correct']);
+          trials.push({
+            p: r['name']||'unknown',
+            cond: r['condition_id']||r['condition']||'',
+            task, rt,
+            correct: isNaN(correct)?0:correct
+          });
+        }
+      }
+      if(hasEmo){
+        const part = (r['part']||'').toLowerCase();
+        const sound = r['sound_label']||'';
+        // accept if part=emotional OR if sound_label is present and has open/force_choice cols
+        if((part==='emotional'||sound) && (r['open_response']!==undefined||r['force_choice']!==undefined)){
+          const conf = parseFloat(r['confidence']);
+          emotional.push({
+            p: r['name']||'unknown',
+            sound: sound||'unknown',
+            open: (r['open_response']||'').trim(),
+            choice: (r['force_choice']||'').trim(),
+            conf: isNaN(conf)?0:conf
+          });
+        }
+      }
+    });
+  });
+
+  log(`Extracted ${trials.length} cognitive trials, ${emotional.length} emotional rows`);
+  return {trials, emotional};
+}
+
+// ── COGNITIVE ─────────────────────────────────────────────────────────────────
+let rtChart,accChart,partLineChart,partAccLineChart,emoDonutChart;
+let partCharts={};
+let currentData=[],currentCondOrder=[],currentParticipants=[];
+
+function buildCondOrder(data){
+  const seen=[...new Set(data.map(d=>d.cond))];
+  return [...COND_ORDER_DEFAULT.filter(c=>seen.includes(c)),...seen.filter(c=>!COND_ORDER_DEFAULT.includes(c))];
+}
+function filterTask(data,task){ return task==='both'?data:data.filter(d=>d.task===task); }
+function condStats(data,task,co){
+  const d=filterTask(data,task);
+  return co.map(c=>{ const s=d.filter(r=>r.cond===c); return{rt:s.length?Math.round(mean(s.map(r=>r.rt))):0,acc:s.length?parseFloat(pct(s.map(r=>r.correct)).toFixed(1)):0}; });
+}
+
+function renderMetrics(data){
+  const parts=[...new Set(data.map(r=>r.p))];
+  const conds=[...new Set(data.map(r=>r.cond))];
+  const strRT=data.filter(r=>r.task==='stroop').map(r=>r.rt);
+  const nbRT=data.filter(r=>r.task==='nback').map(r=>r.rt);
+  document.getElementById('metricCards').innerHTML=`
+    <div class="mc"><div class="mc-label">Total trials</div><div class="mc-val">${data.length}</div><div class="mc-sub">${parts.length} participants, ${conds.length} conditions</div></div>
+    <div class="mc"><div class="mc-label">Overall accuracy</div><div class="mc-val">${pct(data.map(r=>r.correct)).toFixed(1)}%</div></div>
+    <div class="mc"><div class="mc-label">Stroop mean RT</div><div class="mc-val">${strRT.length?Math.round(mean(strRT)):'—'} ms</div></div>
+    <div class="mc"><div class="mc-label">N-back mean RT</div><div class="mc-val">${nbRT.length?Math.round(mean(nbRT)):'—'} ms</div></div>`;
+}
+
+function renderGroupCharts(task){
+  const co=currentCondOrder, labels=co.map(shortLabel);
+  const ss=condStats(currentData,'stroop',co), ns=condStats(currentData,'nback',co);
+  const xT={autoSkip:false,maxRotation:40,font:{size:10}};
+  let rtDs,acDs,leg;
+  if(task==='both'){
+    rtDs=[{label:'Stroop',data:ss.map(d=>d.rt),backgroundColor:'rgba(50,102,173,0.8)',borderColor:'#3266ad',borderWidth:1},{label:'N-back',data:ns.map(d=>d.rt),backgroundColor:'rgba(29,158,117,0.8)',borderColor:'#1D9E75',borderWidth:1}];
+    acDs=[{label:'Stroop',data:ss.map(d=>d.acc),backgroundColor:'rgba(50,102,173,0.8)',borderColor:'#3266ad',borderWidth:1},{label:'N-back',data:ns.map(d=>d.acc),backgroundColor:'rgba(29,158,117,0.8)',borderColor:'#1D9E75',borderWidth:1}];
+    leg=[{label:'Stroop',color:'#3266ad'},{label:'N-back',color:'#1D9E75'}];
+  } else {
+    const st=task==='stroop'?ss:ns, col=task==='stroop'?'#3266ad':'#1D9E75', colA=task==='stroop'?'rgba(50,102,173,0.8)':'rgba(29,158,117,0.8)', lbl=task==='stroop'?'Stroop':'N-back';
+    rtDs=[{label:lbl,data:st.map(d=>d.rt),backgroundColor:colA,borderColor:col,borderWidth:1}];
+    acDs=[{label:lbl,data:st.map(d=>d.acc),backgroundColor:colA,borderColor:col,borderWidth:1}];
+    leg=[{label:lbl,color:col}];
+  }
+  setLegend('legend1',leg); setLegend('legend2',leg);
+  if(rtChart)rtChart.destroy();
+  rtChart=new Chart(document.getElementById('rtChart'),{type:'bar',data:{labels,datasets:rtDs},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:xT},y:{title:{display:true,text:'Mean RT (ms)',font:{size:11}}}}}});
+  if(accChart)accChart.destroy();
+  accChart=new Chart(document.getElementById('accChart'),{type:'bar',data:{labels,datasets:acDs},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:xT},y:{min:0,max:100,title:{display:true,text:'Accuracy (%)',font:{size:11}}}}}});
+}
+
+function renderPartLineCharts(){
+  const co=currentCondOrder, labels=co.map(shortLabel), parts=currentParticipants;
+  const leg=parts.map((p,i)=>({label:p,color:PART_PALETTE[i%PART_PALETTE.length]}));
+  setLegend('legend3',leg); setLegend('legend4',leg);
+  const xT={autoSkip:false,maxRotation:40,font:{size:10}};
+  const rtDs=parts.map((p,i)=>({label:p,data:co.map(c=>{const s=currentData.filter(r=>r.p===p&&r.cond===c);return s.length?Math.round(mean(s.map(r=>r.rt))):null;}),borderColor:PART_PALETTE[i%PART_PALETTE.length],backgroundColor:PART_PALETTE[i%PART_PALETTE.length]+'33',fill:false,tension:0.3,pointRadius:4,spanGaps:true}));
+  const acDs=parts.map((p,i)=>({label:p,data:co.map(c=>{const s=currentData.filter(r=>r.p===p&&r.cond===c);return s.length?parseFloat(pct(s.map(r=>r.correct)).toFixed(1)):null;}),borderColor:PART_PALETTE[i%PART_PALETTE.length],backgroundColor:PART_PALETTE[i%PART_PALETTE.length]+'33',fill:false,tension:0.3,pointRadius:4,spanGaps:true}));
+  if(partLineChart)partLineChart.destroy();
+  partLineChart=new Chart(document.getElementById('partLineChart'),{type:'line',data:{labels,datasets:rtDs},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:xT},y:{title:{display:true,text:'Mean RT (ms)',font:{size:11}}}}}});
+  if(partAccLineChart)partAccLineChart.destroy();
+  partAccLineChart=new Chart(document.getElementById('partAccLineChart'),{type:'line',data:{labels,datasets:acDs},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:xT},y:{min:0,max:100,title:{display:true,text:'Accuracy (%)',font:{size:11}}}}}});
+}
+
+function renderParticipantCards(){
+  const co=currentCondOrder, labels=co.map(shortLabel), grid=document.getElementById('partGrid');
+  grid.innerHTML='';
+  Object.values(partCharts).forEach(c=>c.destroy()); partCharts={};
+  currentParticipants.forEach((p,i)=>{
+    const color=PART_PALETTE[i%PART_PALETTE.length], pale=PART_PALE[i%PART_PALE.length];
+    const pd=currentData.filter(r=>r.p===p);
+    const strRT=pd.filter(r=>r.task==='stroop').map(r=>r.rt), nbRT=pd.filter(r=>r.task==='nback').map(r=>r.rt);
+    const acc=pct(pd.map(r=>r.correct));
+    const sBC=co.map(c=>{const s=pd.filter(r=>r.cond===c&&r.task==='stroop');return s.length?Math.round(mean(s.map(r=>r.rt))):null;});
+    const nBC=co.map(c=>{const s=pd.filter(r=>r.cond===c&&r.task==='nback');return s.length?Math.round(mean(s.map(r=>r.rt))):null;});
+    const aBC=co.map(c=>{const s=pd.filter(r=>r.cond===c);return s.length?parseFloat(pct(s.map(r=>r.correct)).toFixed(1)):null;});
+    const rtId=`rt_${p.replace(/\s/g,'_')}`,accId=`acc_${p.replace(/\s/g,'_')}`,nbId=`nb_${p.replace(/\s/g,'_')}`;
+    const card=document.createElement('div'); card.className='chart-box';
+    card.innerHTML=`
+      <div class="part-header">
+        <div class="part-avatar" style="background:${pale};color:${color}">${p.slice(0,2).toUpperCase()}</div>
+        <div><div class="part-name">${p}</div><div class="part-stats">${pd.length} trials · ${acc.toFixed(0)}% accuracy</div></div>
+      </div>
+      <div class="mini-metrics">
+        <div class="mini-mc"><div class="mini-mc-label">Stroop mean RT</div><div class="mini-mc-val" style="color:${color}">${strRT.length?Math.round(mean(strRT)):'—'} ms</div></div>
+        <div class="mini-mc"><div class="mini-mc-label">N-back mean RT</div><div class="mini-mc-val" style="color:${color}">${nbRT.length?Math.round(mean(nbRT)):'—'} ms</div></div>
+      </div>
+      <div class="chart-title" style="margin-bottom:6px">RT by condition</div>
+      <div style="position:relative;height:180px;margin-bottom:1rem"><canvas id="${rtId}" role="img" aria-label="RT ${p}">RT</canvas></div>
+      <div class="chart-title" style="margin-bottom:6px">Accuracy by condition</div>
+      <div style="position:relative;height:150px;margin-bottom:1rem"><canvas id="${accId}" role="img" aria-label="Acc ${p}">Acc</canvas></div>
+      <div class="chart-title" style="margin-bottom:6px">Stroop vs N-back RT by condition</div>
+      <div style="position:relative;height:150px"><canvas id="${nbId}" role="img" aria-label="Scatter ${p}">Scatter</canvas></div>`;
+    grid.appendChild(card);
+    const xT={autoSkip:false,maxRotation:40,font:{size:10}};
+    partCharts[rtId]=new Chart(document.getElementById(rtId),{type:'bar',data:{labels,datasets:[{label:'Stroop',data:sBC,backgroundColor:color+'99',borderColor:color,borderWidth:1},{label:'N-back',data:nBC,backgroundColor:color+'44',borderColor:color,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:xT},y:{title:{display:true,text:'RT (ms)',font:{size:10}}}}}});
+    partCharts[accId]=new Chart(document.getElementById(accId),{type:'line',data:{labels,datasets:[{label:'Acc',data:aBC,borderColor:color,backgroundColor:pale,fill:true,tension:0.3,pointRadius:4,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:xT},y:{min:0,max:100,title:{display:true,text:'Acc (%)',font:{size:10}}}}}});
+    const scD=co.map(c=>{const sS=pd.filter(r=>r.cond===c&&r.task==='stroop'),sN=pd.filter(r=>r.cond===c&&r.task==='nback');if(!sS.length||!sN.length)return null;return{x:Math.round(mean(sS.map(r=>r.rt))),y:Math.round(mean(sN.map(r=>r.rt))),label:shortLabel(c)};}).filter(Boolean);
+    partCharts[nbId]=new Chart(document.getElementById(nbId),{type:'scatter',data:{datasets:[{data:scD,backgroundColor:color+'cc',pointRadius:7}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw.label}: S=${ctx.raw.x}ms N=${ctx.raw.y}ms`}}},scales:{x:{title:{display:true,text:'Stroop RT (ms)',font:{size:10}}},y:{title:{display:true,text:'N-back RT (ms)',font:{size:10}}}}}});
+  });
+}
+
+// ── EMOTIONAL ─────────────────────────────────────────────────────────────────
+function wordFreq(texts){
+  const freq={};
+  texts.forEach(t=>{ t.toLowerCase().replace(/[^a-z\s]/g,' ').split(/\s+/).forEach(w=>{ if(w.length>2&&!STOP_WORDS.has(w)) freq[w]=(freq[w]||0)+1; }); });
+  return freq;
+}
+
+function renderWordCloud(freq, containerId){
+  const el=document.getElementById(containerId); if(!el)return;
+  el.innerHTML='';
+  const entries=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,60);
+  if(!entries.length){el.innerHTML='<span class="no-data">No open responses found.</span>';return;}
+  const maxF=entries[0][1];
+  const hues=[220,160,30,0,270,340];
+  entries.forEach(([word,f],i)=>{
+    const size=13+Math.round((f/maxF)*26), opacity=0.45+((f/maxF)*0.55);
+    const span=document.createElement('span');
+    span.className='wc-word'; span.textContent=word;
+    span.title=`"${word}" — ${f} time${f>1?'s':''}`;
+    span.style.cssText=`font-size:${size}px;color:hsl(${hues[i%hues.length]},50%,40%);opacity:${opacity.toFixed(2)};font-weight:${f>1?'500':'400'}`;
+    el.appendChild(span);
+  });
+}
+
+function renderEmoDonut(emoData){
+  const counts={};
+  emoData.forEach(d=>{ const n=normalizeEmotion(d.choice); counts[n]=(counts[n]||0)+1; });
+  const labels=Object.keys(counts), values=labels.map(l=>counts[l]), colors=labels.map(l=>EMOTION_COLORS[l]||'#888');
+  if(emoDonutChart)emoDonutChart.destroy();
+  emoDonutChart=new Chart(document.getElementById('emoDonut'),{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:colors,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:12},padding:12,boxWidth:12}}}}});
+}
+
+function renderConfBars(emoData){
+  const byEmo={};
+  emoData.forEach(d=>{ const n=normalizeEmotion(d.choice); if(!byEmo[n])byEmo[n]=[]; byEmo[n].push(d.conf); });
+  const el=document.getElementById('confBars'); el.innerHTML='';
+  if(!Object.keys(byEmo).length){el.innerHTML='<div class="no-data">No data</div>';return;}
+  Object.entries(byEmo).sort((a,b)=>mean(b[1])-mean(a[1])).forEach(([emo,vals])=>{
+    const avg=mean(vals), color=EMOTION_COLORS[emo]||'#888';
+    el.innerHTML+=`<div class="conf-row"><div class="conf-label">${emo}</div><div class="conf-bar-bg"><div class="conf-bar-fill" style="width:${(avg/7*100).toFixed(1)}%;background:${color}"></div></div><div class="conf-val">${avg.toFixed(1)}</div></div>`;
+  });
+}
+
+function renderSoundCards(emoData){
+  const sounds=[...new Set(emoData.map(d=>d.sound))].sort();
+  const el=document.getElementById('soundCards'); el.innerHTML='';
+  sounds.forEach(sound=>{
+    const rows=emoData.filter(d=>d.sound===sound);
+    const avgConf=mean(rows.map(d=>d.conf));
+    const freq={};
+    rows.forEach(d=>{ const n=normalizeEmotion(d.choice); freq[n]=(freq[n]||0)+1; });
+    const topEmo=Object.entries(freq).sort((a,b)=>b[1]-a[1])[0];
+    const color=topEmo?emoColor(topEmo[0]):'#888';
+    const opens=rows.map(d=>d.open).filter(Boolean);
+    const card=document.createElement('div'); card.className='sound-card';
+    card.innerHTML=`
+      <div class="sound-card-label">${sound}</div>
+      <div class="sound-card-emotion" style="color:${color}">${topEmo?topEmo[0]:'—'}</div>
+      <div class="sound-card-bar-wrap"><div class="sound-card-bar" style="width:${(avgConf/7*100).toFixed(1)}%;background:${color}"></div></div>
+      <div class="sound-card-conf">Avg confidence: ${avgConf.toFixed(1)} / 7</div>
+      ${opens.length?`<div class="sound-card-words">${opens.map(o=>`"${o}"`).join(' · ')}</div>`:''}`;
+    el.appendChild(card);
+  });
+}
+
+function renderHeatmap(emoData){
+  const participants=[...new Set(emoData.map(d=>d.p))];
+  const sounds=[...new Set(emoData.map(d=>d.sound))].sort();
+  if(participants.length<2){document.getElementById('heatmapBox').style.display='none';return;}
+  document.getElementById('heatmapBox').style.display='block';
+  const emoShort={'happiness':'Happy','sadness':'Sad','fear':'Fear','anger':'Anger','surprise':'Surprise','disgust':'Disgust'};
+  let html=`<tr><th></th>${sounds.map(s=>`<th>${s}</th>`).join('')}</tr>`;
+  participants.forEach(p=>{
+    html+=`<tr><td class="row-label">${p}</td>`;
+    sounds.forEach(s=>{
+      const row=emoData.find(d=>d.p===p&&d.sound===s);
+      if(row){
+        const n=normalizeEmotion(row.choice), col=EMOTION_COLORS[n]||'#e0e0dc', alpha=(0.2+(row.conf/7)*0.65).toFixed(2);
+        html+=`<td title="${n} (conf ${row.conf})" style="background:${col};opacity:${alpha};color:#222">${emoShort[n]||n}</td>`;
+      } else { html+=`<td style="color:#ccc">—</td>`; }
+    });
+    html+=`</tr>`;
+  });
+  document.getElementById('heatmapTable').innerHTML=html;
+}
+
+function renderPerPartWordClouds(emoData){
+  const participants=[...new Set(emoData.map(d=>d.p))];
+  if(participants.length<2){document.getElementById('partWCBox').style.display='none';return;}
+  document.getElementById('partWCBox').style.display='block';
+  const grid=document.getElementById('partWCGrid'); grid.innerHTML='';
+  participants.forEach((p,i)=>{
+    const texts=emoData.filter(d=>d.p===p).map(d=>d.open).filter(Boolean);
+    const freq=wordFreq(texts), color=PART_PALETTE[i%PART_PALETTE.length];
+    const div=document.createElement('div');
+    div.style.cssText='background:#f5f5f3;border-radius:8px;padding:0.8rem;';
+    const entries=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,20);
+    const maxF=entries[0]?entries[0][1]:1;
+    div.innerHTML=`<div style="font-size:12px;font-weight:500;color:${color};margin-bottom:8px">${p}</div><div style="display:flex;flex-wrap:wrap;gap:6px;min-height:60px;align-items:center">${entries.map(([w,f])=>`<span style="font-size:${11+Math.round((f/maxF)*14)}px;color:${color};opacity:${(0.5+(f/maxF)*0.5).toFixed(2)}">${w}</span>`).join('')}</div>`;
+    grid.appendChild(div);
+  });
+}
+
+// ── MAIN ──────────────────────────────────────────────────────────────────────
+document.getElementById('parseBtn').addEventListener('click',()=>{
+  logs=[];
+  const text=document.getElementById('csvInput').value.trim();
+  const err=document.getElementById('errMsg');
+  const dbg=document.getElementById('debugLog');
+  err.textContent='';
+
+  if(!text){err.textContent='Please paste some data first.';return;}
+
+  const {trials, emotional} = parseAll(text);
+
+  dbg.textContent=logs.join('\n');
+
+  if(!trials.length && !emotional.length){
+    err.textContent='No valid data found. Hit "Show debug log" below to see what the parser detected.';
+    dbg.style.display='block';
+    return;
+  }
+
+  document.getElementById('chartsArea').classList.add('visible');
+
+  if(trials.length){
+    currentData=trials;
+    currentCondOrder=buildCondOrder(trials);
+    currentParticipants=[...new Set(trials.map(r=>r.p))];
+    document.getElementById('cogSection').style.display='block';
+    renderMetrics(trials);
+    renderGroupCharts('both');
+    renderPartLineCharts();
+    renderParticipantCards();
+  } else {
+    document.getElementById('cogSection').style.display='none';
+  }
+
+  if(emotional.length){
+    document.getElementById('emoSection').style.display='block';
+    renderEmoDonut(emotional);
+    renderConfBars(emotional);
+    renderSoundCards(emotional);
+    renderHeatmap(emotional);
+    renderWordCloud(wordFreq(emotional.map(d=>d.open).filter(Boolean)),'wordCloud');
+    renderPerPartWordClouds(emotional);
+  } else {
+    document.getElementById('emoSection').style.display='none';
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  document.getElementById('csvInput').value='';
+  document.getElementById('errMsg').textContent='';
+  document.getElementById('debugLog').style.display='none';
+  document.getElementById('chartsArea').classList.remove('visible');
+  currentData=[];
+});
+
+document.getElementById('debugBtn').addEventListener('click',()=>{
+  const d=document.getElementById('debugLog');
+  d.style.display=d.style.display==='none'?'block':'none';
+});
+
+document.getElementById('taskTabs').addEventListener('click',e=>{
+  if(!e.target.classList.contains('tab'))return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  e.target.classList.add('active');
+  if(currentData.length) renderGroupCharts(e.target.dataset.task);
+});
+</script>
+</body>
+</html>
