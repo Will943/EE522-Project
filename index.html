@@ -559,7 +559,7 @@ async function loadAudio(){
   try{
     for(let i=0;i<files.length;i++){
       const f=files[i];
-      msg.textContent='Loading '+f.url+'...';
+      msg.textContent='Loading audio files... ('+(i+1)+' of '+files.length+')';
       bar.style.width=((i/files.length)*100)+'%';
       const res=await fetch(f.url);
       const ab=await res.arrayBuffer();
