@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cognitive Performance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f5f5f3; color: #1a1a1a; padding: 2rem; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.3rem; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin: 1.8rem 0 0.6rem; }
+  .card { background: #fff; border-radius: 10px; padding: 1.2rem; border: 1px solid #e8e8e6; margin-bottom: 1rem; }
+  textarea { width: 100%; height: 160px; font-family: monospace; font-size: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fafaf8; color: #1a1a1a; resize: vertical; }
+  textarea:focus { outline: none; border-color: #3266ad; }
+  .hint { font-size: 12px; color: #999; margin-top: 6px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  button { padding: 7px 18px; font-size: 13px; font-weight: 500; cursor: pointer; border-radius: 8px; border: 1px solid #ccc; background: #fff; color: #1a1a1a; }
+  button:hover { background: #f0f0ee; }
+  button.primary { background: #3266ad; color: #fff; border-color: #3266ad; }
+  button.primary:hover { background: #285a9e; }
+  .err { font-size: 13px; color: #c0392b; margin-top: 8px; min-height: 16px; }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin: 0.8rem 0 1.2rem; }
+  .mc { background: #f5f5f3; border-radius: 8px; padding: 0.85rem 1rem; }
+  .mc-label { font-size: 12px; color: #888; margin-bottom: 3px; }
+  .mc-val { font-size: 22px; font-weight: 500; }
+  .mc-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .tabs { display: flex; gap: 6px; margin: 0.8rem 0; flex-wrap: wrap; }
+  .tab { padding: 5px 15px; font-size: 13px; cursor: pointer; border-radius: 8px; border: 1px solid #ccc; background: #fff; color: #666; }
+  .tab.active { background: #3266ad; color: #fff; border-color: #3266ad; font-weight: 500; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; font-size: 12px; color: #666; }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .ldot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .chart-box { background: #fff; border-radius: 10px; padding: 1rem 1.2rem 1.2rem; border: 1px solid #e8e8e6; margin-bottom: 1rem; }
+  .chart-title { font-size: 13px; font-weight: 500; color: #444; margin-bottom: 8px; }
+  .charts-area { display: none; }
+  .charts-area.visible { display: block; }
+  .part-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+  .part-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .part-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .part-name { font-size: 14px; font-weight: 500; }
+  .part-stats { font-size: 12px; color: #888; }
+  .mini-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .mini-mc { background: #f5f5f3; border-radius: 6px; padding: 6px 10px; }
+  .mini-mc-label { font-size: 11px; color: #999; }
+  .mini-mc-val { font-size: 15px; font-weight: 500; margin-top: 1px; }
+  .nav-pills { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 1rem; }
+  .nav-pill { padding: 4px 12px; font-size: 12px; cursor: pointer; border-radius: 20px; border: 1px solid #ddd; background: #fff; color: #666; }
+  .nav-pill:hover { background: #f0f0ee; }
+  hr.divider { border: none; border-top: 1px solid #e8e8e6; margin: 1.5rem 0; }
+</style>
+</head>
+<body>
+
+<h1>Cognitive Performance Dashboard</h1>
+<p class="subtitle">Paste your CSV/TSV data to generate all charts automatically.</p>
+
+<div class="card">
+  <div class="section-label">Paste your data</div>
+  <textarea id="csvInput" placeholder="Paste your tab-separated or comma-separated data here (include the header row)..."></textarea>
+  <p class="hint">Needs columns: name, condition_id, task_type, rt_ms, correct — extra columns are ignored. Tab or comma separated both work.</p>
+  <div class="btn-row">
+    <button class="primary" id="parseBtn">Generate charts</button>
+    <button id="clearBtn">Clear</button>
+  </div>
+  <div id="errMsg" class="err"></div>
+</div>
+
+<div class="charts-area" id="chartsArea">
+
+  <!-- OVERVIEW -->
+  <div class="section-label">Overview — all participants</div>
+  <div class="metric-grid" id="metricCards"></div>
+
+  <!-- NAV PILLS -->
+  <div class="nav-pills" id="navPills">
+    <button class="nav-pill" onclick="scrollTo('secGroup')">Group charts</button>
+    <button class="nav-pill" onclick="scrollTo('secPart')">Per-participant charts</button>
+  </div>
+
+  <!-- GROUP CHARTS -->
+  <div id="secGroup">
+    <div class="section-label">Group: RT &amp; Accuracy by condition</div>
+
+    <div class="tabs" id="taskTabs">
+      <button class="tab active" data-task="both">Both tasks</button>
+      <button class="tab" data-task="stroop">Stroop only</button>
+      <button class="tab" data-task="nback">N-back only</button>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-title">Mean reaction time (ms) by acoustic condition</div>
+      <div class="legend" id="legend1"></div>
+      <div style="position:relative;height:280px">
+        <canvas id="rtChart" role="img" aria-label="Mean RT by condition">Mean RT chart</canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-title">Accuracy (%) by acoustic condition</div>
+      <div class="legend" id="legend2"></div>
+      <div style="position:relative;height:280px">
+        <canvas id="accChart" role="img" aria-label="Accuracy by condition">Accuracy chart</canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-title">Per-participant mean RT profile across conditions</div>
+      <div class="legend" id="legend3"></div>
+      <div style="position:relative;height:280px">
+        <canvas id="partLineChart" role="img" aria-label="Per participant RT line chart">Participant line chart</canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-title">Per-participant accuracy profile across conditions</div>
+      <div class="legend" id="legend4"></div>
+      <div style="position:relative;height:280px">
+        <canvas id="partAccLineChart" role="img" aria-label="Per participant accuracy line chart">Participant accuracy chart</canvas>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- PER-PARTICIPANT CHARTS -->
+  <div id="secPart">
+    <div class="section-label">Per-participant breakdown</div>
+    <div class="part-grid" id="partGrid"></div>
+  </div>
+
+</div>
+
+<script>
+const COND_LABELS = {
+  whitenoise:'White noise', dry:'Dry (auditorium)', resonant:'Resonant (tower)',
+  earlyrefl:'Early reflections', reverberant:'Reverberant (cathedral)',
+  rawspeech:'Raw speech', spatial:'Spatial (reactor hall)'
+};
+const COND_ORDER_DEFAULT = ['whitenoise','dry','resonant','earlyrefl','reverberant','rawspeech','spatial'];
+const PART_PALETTE = ['#3266ad','#1D9E75','#D85A30','#7F77DD','#BA7517','#D4537E','#555555','#E24B4A','#0e7490','#b45309'];
+const PART_PALE    = ['rgba(50,102,173,0.15)','rgba(29,158,117,0.15)','rgba(216,90,48,0.15)','rgba(127,119,221,0.15)','rgba(186,117,23,0.15)','rgba(212,83,126,0.15)'];
+
+let rtChart, accChart, partLineChart, partAccLineChart;
+let partCharts = {};
+let currentData = [], currentCondOrder = [], currentParticipants = [];
+
+function mean(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function pct(arr){ return arr.length ? arr.filter(v=>v===1).length/arr.length*100 : 0; }
+function condLabel(c){ return COND_LABELS[c]||c; }
+function shortLabel(c){ return condLabel(c).replace(' (auditorium)','').replace(' (tower)','').replace(' (cathedral)','').replace(' (reactor hall)','').replace(' (stairwell)',''); }
+
+function detectSep(text){ return text.split('\n')[0].includes('\t') ? '\t' : ','; }
+
+function parseCSV(text){
+  const sep = detectSep(text);
+  const lines = text.trim().split('\n').filter(l=>l.trim());
+  if(lines.length < 2) return null;
+  const headers = lines[0].split(sep).map(h=>h.trim().replace(/"/g,'').toLowerCase());
+  const rows = [];
+  for(let i=1;i<lines.length;i++){
+    const cols = lines[i].split(sep).map(c=>c.trim().replace(/"/g,''));
+    if(cols.length < 3) continue;
+    const obj = {};
+    headers.forEach((h,j)=>{ obj[h]=cols[j]||''; });
+    rows.push(obj);
+  }
+  return {headers,rows};
+}
+
+function extractTrials(rows){
+  const trials = [];
+  for(const r of rows){
+    const task = (r['task_type']||'').toLowerCase();
+    if(task!=='stroop'&&task!=='nback') continue;
+    const rt = parseFloat(r['rt_ms']);
+    if(isNaN(rt)) continue;
+    const correct = parseInt(r['correct']);
+    const cond = r['condition_id']||r['condition']||'';
+    const name = r['name']||r['participant']||'unknown';
+    trials.push({p:name, cond, task, rt, correct:isNaN(correct)?0:correct});
+  }
+  return trials;
+}
+
+function buildCondOrder(data){
+  const seen = [...new Set(data.map(d=>d.cond))];
+  const known = COND_ORDER_DEFAULT.filter(c=>seen.includes(c));
+  const extra = seen.filter(c=>!COND_ORDER_DEFAULT.includes(c));
+  return [...known,...extra];
+}
+
+function filterTask(data,task){ return task==='both'?data:data.filter(d=>d.task===task); }
+
+function condStats(data,task,condOrder){
+  const d = filterTask(data,task);
+  return condOrder.map(c=>{
+    const sub = d.filter(r=>r.cond===c);
+    return { rt:sub.length?Math.round(mean(sub.map(r=>r.rt))):0, acc:sub.length?parseFloat(pct(sub.map(r=>r.correct)).toFixed(1)):0 };
+  });
+}
+
+function setLegend(id,items){
+  document.getElementById(id).innerHTML = items.map(i=>`<span><span class="ldot" style="background:${i.color}"></span>${i.label}</span>`).join('');
+}
+
+function scrollTo(id){ document.getElementById(id).scrollIntoView({behavior:'smooth',block:'start'}); }
+
+// ── OVERVIEW METRICS ──────────────────────────────────────────────────────────
+function renderMetrics(data){
+  const parts = [...new Set(data.map(r=>r.p))];
+  const conds = [...new Set(data.map(r=>r.cond))];
+  const strRT = data.filter(r=>r.task==='stroop').map(r=>r.rt);
+  const nbRT  = data.filter(r=>r.task==='nback').map(r=>r.rt);
+  const overallAcc = pct(data.map(r=>r.correct));
+  document.getElementById('metricCards').innerHTML = `
+    <div class="mc"><div class="mc-label">Total trials</div><div class="mc-val">${data.length}</div><div class="mc-sub">${parts.length} participant${parts.length!==1?'s':''}, ${conds.length} conditions</div></div>
+    <div class="mc"><div class="mc-label">Overall accuracy</div><div class="mc-val">${overallAcc.toFixed(1)}%</div></div>
+    <div class="mc"><div class="mc-label">Stroop mean RT</div><div class="mc-val">${strRT.length?Math.round(mean(strRT)):'—'} ms</div></div>
+    <div class="mc"><div class="mc-label">N-back mean RT</div><div class="mc-val">${nbRT.length?Math.round(mean(nbRT)):'—'} ms</div></div>
+  `;
+}
+
+// ── GROUP CHARTS ──────────────────────────────────────────────────────────────
+function renderGroupCharts(task){
+  const condOrder = currentCondOrder;
+  const labels = condOrder.map(shortLabel);
+  const stroopStats = condStats(currentData,'stroop',condOrder);
+  const nbackStats  = condStats(currentData,'nback',condOrder);
+  const xTicks = {autoSkip:false,maxRotation:35,font:{size:11}};
+
+  let rtDs, accDs, legItems;
+  if(task==='both'){
+    rtDs  = [{label:'Stroop',data:stroopStats.map(d=>d.rt), backgroundColor:'rgba(50,102,173,0.8)',borderColor:'#3266ad',borderWidth:1},
+             {label:'N-back',data:nbackStats.map(d=>d.rt),  backgroundColor:'rgba(29,158,117,0.8)',borderColor:'#1D9E75',borderWidth:1}];
+    accDs = [{label:'Stroop',data:stroopStats.map(d=>d.acc),backgroundColor:'rgba(50,102,173,0.8)',borderColor:'#3266ad',borderWidth:1},
+             {label:'N-back',data:nbackStats.map(d=>d.acc), backgroundColor:'rgba(29,158,117,0.8)',borderColor:'#1D9E75',borderWidth:1}];
+    legItems = [{label:'Stroop',color:'#3266ad'},{label:'N-back',color:'#1D9E75'}];
+  } else {
+    const stats = task==='stroop'?stroopStats:nbackStats;
+    const col = task==='stroop'?'#3266ad':'#1D9E75';
+    const colA= task==='stroop'?'rgba(50,102,173,0.8)':'rgba(29,158,117,0.8)';
+    const lbl = task==='stroop'?'Stroop':'N-back';
+    rtDs  = [{label:lbl,data:stats.map(d=>d.rt), backgroundColor:colA,borderColor:col,borderWidth:1}];
+    accDs = [{label:lbl,data:stats.map(d=>d.acc),backgroundColor:colA,borderColor:col,borderWidth:1}];
+    legItems = [{label:lbl,color:col}];
+  }
+
+  setLegend('legend1',legItems);
+  setLegend('legend2',legItems);
+
+  if(rtChart) rtChart.destroy();
+  rtChart = new Chart(document.getElementById('rtChart'),{type:'bar',data:{labels,datasets:rtDs},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:xTicks},y:{title:{display:true,text:'Mean RT (ms)',font:{size:12}}}}}});
+
+  if(accChart) accChart.destroy();
+  accChart = new Chart(document.getElementById('accChart'),{type:'bar',data:{labels,datasets:accDs},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:xTicks},y:{min:0,max:100,title:{display:true,text:'Accuracy (%)',font:{size:12}}}}}});
+}
+
+function renderPartLineCharts(){
+  const condOrder = currentCondOrder;
+  const labels = condOrder.map(shortLabel);
+  const participants = currentParticipants;
+  const legItems = participants.map((p,i)=>({label:p,color:PART_PALETTE[i%PART_PALETTE.length]}));
+  setLegend('legend3',legItems);
+  setLegend('legend4',legItems);
+  const xTicks = {autoSkip:false,maxRotation:35,font:{size:11}};
+
+  const rtDatasets = participants.map((p,i)=>{
+    const color = PART_PALETTE[i%PART_PALETTE.length];
+    return {label:p,data:condOrder.map(c=>{const sub=currentData.filter(r=>r.p===p&&r.cond===c);return sub.length?Math.round(mean(sub.map(r=>r.rt))):null;}),
+      borderColor:color,backgroundColor:color+'33',fill:false,tension:0.3,pointRadius:5,spanGaps:true};
+  });
+  const accDatasets = participants.map((p,i)=>{
+    const color = PART_PALETTE[i%PART_PALETTE.length];
+    return {label:p,data:condOrder.map(c=>{const sub=currentData.filter(r=>r.p===p&&r.cond===c);return sub.length?parseFloat(pct(sub.map(r=>r.correct)).toFixed(1)):null;}),
+      borderColor:color,backgroundColor:color+'33',fill:false,tension:0.3,pointRadius:5,spanGaps:true};
+  });
+
+  if(partLineChart) partLineChart.destroy();
+  partLineChart = new Chart(document.getElementById('partLineChart'),{type:'line',data:{labels,datasets:rtDatasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:xTicks},y:{title:{display:true,text:'Mean RT (ms)',font:{size:12}}}}}});
+
+  if(partAccLineChart) partAccLineChart.destroy();
+  partAccLineChart = new Chart(document.getElementById('partAccLineChart'),{type:'line',data:{labels,datasets:accDatasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:xTicks},y:{min:0,max:100,title:{display:true,text:'Accuracy (%)',font:{size:12}}}}}});
+}
+
+// ── PER-PARTICIPANT CHARTS ────────────────────────────────────────────────────
+function renderParticipantCards(){
+  const condOrder = currentCondOrder;
+  const labels = condOrder.map(shortLabel);
+  const grid = document.getElementById('partGrid');
+  grid.innerHTML = '';
+
+  // destroy old charts
+  Object.values(partCharts).forEach(c=>c.destroy());
+  partCharts = {};
+
+  currentParticipants.forEach((p,i)=>{
+    const color = PART_PALETTE[i%PART_PALETTE.length];
+    const pale  = PART_PALE[i%PART_PALE.length];
+    const pData = currentData.filter(r=>r.p===p);
+    const strRT = pData.filter(r=>r.task==='stroop').map(r=>r.rt);
+    const nbRT  = pData.filter(r=>r.task==='nback').map(r=>r.rt);
+    const acc   = pct(pData.map(r=>r.correct));
+
+    const stroopByC = condOrder.map(c=>{const s=pData.filter(r=>r.cond===c&&r.task==='stroop');return s.length?Math.round(mean(s.map(r=>r.rt))):null;});
+    const nbackByC  = condOrder.map(c=>{const s=pData.filter(r=>r.cond===c&&r.task==='nback');return s.length?Math.round(mean(s.map(r=>r.rt))):null;});
+    const accByC    = condOrder.map(c=>{const s=pData.filter(r=>r.cond===c);return s.length?parseFloat(pct(s.map(r=>r.correct)).toFixed(1)):null;});
+
+    const initials = p.slice(0,2).toUpperCase();
+    const rtId  = `rt_${p}`;
+    const accId = `acc_${p}`;
+    const nbId  = `nb_${p}`;
+
+    const card = document.createElement('div');
+    card.className = 'chart-box';
+    card.style.gridColumn = 'span 1';
+    card.innerHTML = `
+      <div class="part-header">
+        <div class="part-avatar" style="background:${pale};color:${color}">${initials}</div>
+        <div>
+          <div class="part-name">${p}</div>
+          <div class="part-stats">${pData.length} trials · ${acc.toFixed(0)}% accuracy</div>
+        </div>
+      </div>
+      <div class="mini-metrics">
+        <div class="mini-mc"><div class="mini-mc-label">Stroop mean RT</div><div class="mini-mc-val" style="color:${color}">${strRT.length?Math.round(mean(strRT)):'—'} ms</div></div>
+        <div class="mini-mc"><div class="mini-mc-label">N-back mean RT</div><div class="mini-mc-val" style="color:${color}">${nbRT.length?Math.round(mean(nbRT)):'—'} ms</div></div>
+      </div>
+      <div class="chart-title" style="margin-bottom:6px">RT by condition</div>
+      <div style="position:relative;height:180px;margin-bottom:1rem"><canvas id="${rtId}" role="img" aria-label="RT by condition for ${p}">RT chart ${p}</canvas></div>
+      <div class="chart-title" style="margin-bottom:6px">Accuracy by condition</div>
+      <div style="position:relative;height:160px;margin-bottom:1rem"><canvas id="${accId}" role="img" aria-label="Accuracy by condition for ${p}">Accuracy chart ${p}</canvas></div>
+      <div class="chart-title" style="margin-bottom:6px">Stroop vs N-back RT scatter</div>
+      <div style="position:relative;height:160px"><canvas id="${nbId}" role="img" aria-label="Stroop vs nback scatter for ${p}">Scatter ${p}</canvas></div>
+    `;
+    grid.appendChild(card);
+
+    // RT bar
+    partCharts[rtId] = new Chart(document.getElementById(rtId),{
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'Stroop',data:stroopByC,backgroundColor:color+'99',borderColor:color,borderWidth:1},
+        {label:'N-back',data:nbackByC, backgroundColor:color+'44',borderColor:color,borderWidth:1,borderDash:[4,2]}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},autoSkip:false,maxRotation:40}},y:{title:{display:true,text:'RT (ms)',font:{size:11}}}}}
+    });
+
+    // Accuracy line
+    partCharts[accId] = new Chart(document.getElementById(accId),{
+      type:'line',
+      data:{labels,datasets:[{label:'Accuracy',data:accByC,borderColor:color,backgroundColor:pale,fill:true,tension:0.3,pointRadius:4,spanGaps:true}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},autoSkip:false,maxRotation:40}},y:{min:0,max:100,title:{display:true,text:'Acc (%)',font:{size:11}}}}}
+    });
+
+    // Stroop vs N-back scatter per condition
+    const scatterData = condOrder.map((c,ci)=>{
+      const sS = pData.filter(r=>r.cond===c&&r.task==='stroop');
+      const sN = pData.filter(r=>r.cond===c&&r.task==='nback');
+      if(!sS.length||!sN.length) return null;
+      return {x:Math.round(mean(sS.map(r=>r.rt))), y:Math.round(mean(sN.map(r=>r.rt))), label:shortLabel(c)};
+    }).filter(Boolean);
+
+    partCharts[nbId] = new Chart(document.getElementById(nbId),{
+      type:'scatter',
+      data:{datasets:[{label:'Condition',data:scatterData,backgroundColor:color+'cc',pointRadius:7,pointHoverRadius:9}]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:ctx=>`${ctx.raw.label}: Stroop ${ctx.raw.x}ms, N-back ${ctx.raw.y}ms`}}
+        },
+        scales:{
+          x:{title:{display:true,text:'Stroop RT (ms)',font:{size:11}}},
+          y:{title:{display:true,text:'N-back RT (ms)',font:{size:11}}}
+        }
+      }
+    });
+  });
+}
+
+// ── MAIN FLOW ─────────────────────────────────────────────────────────────────
+function activeTask(){ return document.querySelector('.tab.active').dataset.task; }
+
+document.getElementById('parseBtn').addEventListener('click',()=>{
+  const text = document.getElementById('csvInput').value.trim();
+  const err = document.getElementById('errMsg');
+  err.textContent = '';
+  if(!text){ err.textContent='Please paste some data first.'; return; }
+  const parsed = parseCSV(text);
+  if(!parsed){ err.textContent='Could not parse — make sure you include a header row.'; return; }
+  const trials = extractTrials(parsed.rows);
+  if(!trials.length){ err.textContent='No valid trials found. Check that task_type is "stroop" or "nback" and rt_ms is a number.'; return; }
+
+  currentData = trials;
+  currentCondOrder = buildCondOrder(trials);
+  currentParticipants = [...new Set(trials.map(r=>r.p))];
+
+  renderMetrics(trials);
+  renderGroupCharts(activeTask());
+  renderPartLineCharts();
+  renderParticipantCards();
+
+  document.getElementById('chartsArea').classList.add('visible');
+});
+
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  document.getElementById('csvInput').value='';
+  document.getElementById('errMsg').textContent='';
+  document.getElementById('chartsArea').classList.remove('visible');
+  currentData=[];
+});
+
+document.getElementById('taskTabs').addEventListener('click',e=>{
+  if(!e.target.classList.contains('tab')) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  e.target.classList.add('active');
+  if(currentData.length) renderGroupCharts(e.target.dataset.task);
+});
+</script>
+</body>
+</html>
