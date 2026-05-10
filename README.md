@@ -92,7 +92,7 @@ Five original soundscapes designed to evoke specific universal emotions. Each is
 ---
 
 ### `DataProcessDashboard`
-An HTML dashboard for processing and visualising the raw participant data collected from Google Sheets. Used internally by the team for statistical analysis, figure generation, and verifying data quality before running the formal analysis pipeline.
+An HTML dashboard for processing and visualising the raw participant data collected from Google Sheets. Used internally simple statistical analysis, figure generation, and verifying data quality before running a final analysis. 
 
 ---
 
