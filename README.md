@@ -124,7 +124,7 @@ chatter.wav
 
 **`BufferSourceNode (loop)`** — the Web Audio API node that plays the audio file. Set to loop so the babble repeats continuously throughout each condition with no gaps or cutouts.
 
-**`ConvolverNode (room IR)`** — the core of the signal chain. This node convolves the babble in real time with the room impulse response file for the current condition, making the babble sound as if it were physically playing inside that real space. The IR is swapped out at the start of each condition. For the white noise baseline this node is bypassed entirely — a randomly generated buffer is passed through a `BiquadFilterNode` instead.
+**`ConvolverNode (room IR)`** — the core of the signal chain. This node convolves the babble in real time with the room impulse response file for the current condition, making the babble sound as if it were physically playing inside that real space. The IR is swapped out at the start of each condition.  
 
 **`DryGainNode (0.20)`** — taps off 20% of the completely unprocessed signal before room treatment. Mixing in a small amount of dry signal prevents the output from sounding unrealistically distant or fully submerged in reverb.
 
