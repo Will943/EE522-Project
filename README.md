@@ -128,7 +128,7 @@ chatter.wav
 
 **`DryGainNode (0.20)`** — taps off 20% of the completely unprocessed signal before room treatment. Mixing in a small amount of dry signal prevents the output from sounding unrealistically distant or fully submerged in reverb.
 
-**`WetGainNode (0.80)`** — carries the fully convolved (room-processed) signal at 80% volume. The dry and wet streams are summed together at this point, which is standard practice in reverb processing.
+**`WetGainNode (0.80)`** — carries the fully convolved signal at 80% volume. The dry and wet streams are summed together at this point, which is standard practice in reverb processing.
 
 **`MasterGainNode`** — a final gain stage that applies per-condition volume adjustments to equalise perceived loudness across conditions, so differences in participant performance reflect acoustics rather than loudness differences.
 
