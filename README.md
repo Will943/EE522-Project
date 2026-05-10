@@ -1,10 +1,10 @@
-# EE522 – Soundscapes in Psychoacoustics
+## EE522 – Soundscapes in Psychoacoustics
 
-**Live Site:** [https://will943.github.io/EE522-Project/](https://will943.github.io/EE522-Project/)
+#**Live Site:** [https://will943.github.io/EE522-Project/](https://will943.github.io/EE522-Project/)
 
-**Course:** EE 522 – Spatial Audio for Real and Virtual Spaces (Spring 2026)
-**Team:** Ali Ali, William Wong, Shamlan Alzenki
-**Institution:** University of Southern California, Viterbi School of Engineering
+#**Course:** EE 522 – Spatial Audio for Real and Virtual Spaces (Spring 2026)
+#**Team:** Ali Ali, William Wong, Shamlan Alzenki
+#**Institution:** University of Southern California, Viterbi School of Engineering
 
 ---
 
