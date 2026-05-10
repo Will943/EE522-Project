@@ -73,7 +73,7 @@ These five `.wav` files are **room impulse responses (IRs)** sourced from the [O
 **C50** = clarity index (positive = speech is clear; negative = late reflections dominate and speech smears).
 **EDT** = early decay time (perceived reverberance).
 
-A sixth condition — **white noise** — has no IR file because it is synthesised directly in the Web Audio API using a `BiquadFilterNode` (bandpass, 1200 Hz, Q = 0.6) applied to a randomly generated buffer.
+**White noise** is the sixth condition and has no IR file because it is synthesised directly in the Web Audio API using a `BiquadFilterNode` (bandpass, 1200 Hz, Q = 0.6) applied to a randomly generated buffer.
 
 ---
 
