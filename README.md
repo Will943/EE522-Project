@@ -12,8 +12,6 @@
 
 This repository contains the full web-based experiment platform for our EE522 final project. The study investigates how room acoustics affect human cognitive performance and emotional response. Participants complete two cognitive tasks (Stroop and N-back) while listening to multi-talker babble convolved with real room impulse responses, and then listen to five emotionally designed soundscapes and report what they feel.
 
-Everything runs in the browser — no installs, no external dependencies. Just open `index.html` or visit the live site above.
-
 ---
 
 ## Repository Structure
@@ -52,12 +50,10 @@ The entire experiment is contained in this single HTML file. It is built with va
 - Five emotional soundscape listening tests with open-ended and 6-AFC responses
 - Automatic data submission to Google Sheets via Google Apps Script
 
-No frameworks, no build tools — open the file or visit the live site and it runs.
-
 ---
 
 ### `chatter.wav`
-The base auditory stimulus used across all six cognitive conditions. This is a **multi-talker speech babble** recording — multiple speakers talking simultaneously at a natural conversational level. It was chosen because intelligible background speech engages the phonological loop (the Irrelevant Speech Effect), creating selective interference with the N-back working memory task. The same file is used for every room condition so that any performance difference between conditions is attributable solely to the room acoustics, not the stimulus content.
+The base auditory stimulus used across all six cognitive conditions. This is a **multi-talker speech babble** recording containing multiple speakers talking simultaneously at a natural conversational level. It was chosen because intelligible background speech engages the phonological loop, creating selective interference with the N-back working memory task. The same file is used for every room condition so that any performance difference between conditions is attributable solely to the room acoustics, not the stimulus content.
 
 ---
 
@@ -119,10 +115,24 @@ chatter.wav
     └── BufferSourceNode (loop)
             └── ConvolverNode (room IR)  ← set per condition
                     ├── DryGainNode (0.20)
-                    └── WetGainNode (0.85)
+                    └── WetGainNode (0.80)
                             └── MasterGainNode
                                     └── AudioContext.destination
 ```
+
+**`chatter.wav`** — the raw multi-talker babble audio file, loaded into memory as the sound source at startup.
+
+**`BufferSourceNode (loop)`** — the Web Audio API node that plays the audio file. Set to loop so the babble repeats continuously throughout each condition with no gaps or cutouts.
+
+**`ConvolverNode (room IR)`** — the core of the signal chain. This node convolves the babble in real time with the room impulse response file for the current condition, making the babble sound as if it were physically playing inside that real space. The IR is swapped out at the start of each condition. For the white noise baseline this node is bypassed entirely — a randomly generated buffer is passed through a `BiquadFilterNode` instead.
+
+**`DryGainNode (0.20)`** — taps off 20% of the completely unprocessed signal before room treatment. Mixing in a small amount of dry signal prevents the output from sounding unrealistically distant or fully submerged in reverb.
+
+**`WetGainNode (0.80)`** — carries the fully convolved (room-processed) signal at 80% volume. The dry and wet streams are summed together at this point, which is standard practice in reverb processing.
+
+**`MasterGainNode`** — a final gain stage that applies per-condition volume adjustments to equalise perceived loudness across conditions, so differences in participant performance reflect acoustics rather than loudness differences.
+
+**`AudioContext.destination`** — the endpoint of the Web Audio API graph, representing the participant's physical audio output device (headphones or speakers).
 
 White noise baseline bypasses the ConvolverNode entirely and routes a filtered random buffer through the MasterGainNode directly.
 
