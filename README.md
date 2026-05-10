@@ -59,7 +59,14 @@ The base auditory stimulus used across all six cognitive conditions. This is a *
 
 ### Impulse Response Files
 
-These five `.wav` files are **room impulse responses (IRs)** sourced from the [OpenAIR (Open Acoustic Impulse Response) library](https://www.openair.hosted.york.ac.uk/). Each IR captures the complete acoustic transfer function of a real physical space, including direct sound, early reflections, and late reverberation. In `index.html`, `chatter.wav` is convolved with each IR in real time via the Web Audio API `ConvolverNode`, making the babble sound as if it were playing inside that real space.
+These five `.wav` files are **room impulse responses (IRs)** sourced from the
+[OpenAIR (Open Acoustic Impulse Response) library](https://www.openair.hosted.york.ac.uk/).
+Each IR captures the complete acoustic transfer function of a real physical space,
+including direct sound, early reflections, and late reverberation. In `index.html`,
+`chatter.wav` is convolved with each IR in real time via the Web Audio API `ConvolverNode`,
+making the babble sound as if it were playing inside that real space. Acoustic parameters
+(RT60, C50, EDT) for each condition were obtained from ODEON room acoustics simulation
+and verified against the published OpenAIR measurements.
 
 | File | Condition Label | Real Space | RT60 (s) | C50 (dB) | EDT (s) |
 |---|---|---|---|---|---|
@@ -128,11 +135,11 @@ chatter.wav
 
 **`DryGainNode (0.20)`** — taps off 20% of the completely unprocessed signal before room treatment. Mixing in a small amount of dry signal prevents the output from sounding unrealistically distant or fully submerged in reverb.
 
-**`WetGainNode (0.80)`** — carries the fully convolved signal at 80% volume. The dry and wet streams are summed together at this point, which is standard practice in reverb processing.
+**`WetGainNode (0.80)`** — carries the fully convolved signal at 80% volume. The dry and wet streams are summed together at this point. 
 
 **`MasterGainNode`** — a final gain stage that applies per-condition volume adjustments to equalise perceived loudness across conditions, so differences in participant performance reflect acoustics rather than loudness differences.
 
-**`AudioContext.destination`** — the endpoint of the Web Audio API graph, representing the participant's physical audio output device (headphones or speakers).
+**`AudioContext.destination`** — the endpoint of the Web Audio API graph, representing the participant's physical audio output device. 
 
 White noise baseline bypasses the ConvolverNode entirely and routes a filtered random buffer through the MasterGainNode directly.
 
